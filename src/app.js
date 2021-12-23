@@ -1,17 +1,13 @@
-const express = require('express');
-const { route } = require('express/lib/application');
-const app = express();
-const cors = require('cors');
+const express = require('express')
+const app = express()
+const cors = require('cors')
 
-app.use(cors());
-app.use(express.json());
+app.use(cors())
+app.use(express.json())
 
-const userRoute = require('./routes/userRoute');
-app.use('/user', userRoute);
-
-route.post
-
+const userRoute = require('./routes/userRoute')
+app.use('/user', userRoute)
 
 app.listen(8080, () => {
-    console.log("Server started");
+  console.log('Server started')
 })
