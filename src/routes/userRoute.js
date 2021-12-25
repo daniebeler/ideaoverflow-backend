@@ -25,7 +25,7 @@ router.post('/register', async (req, res) => {
       return res.json({ header: 'Fehler', message: 'Die Passwörter stimmen nicht überein.' })
     }
 
-    con.query('SELECT * FROM user WHERE email = ?', [req.body.email], (err, user) => {
+    con.query(`SELECT * FROM user WHERE email = ${con.escape(req.body.email)}`, (err, user) => {
       if (err) {
         con.release()
         return res.status(401).json({ err })
@@ -63,7 +63,7 @@ router.post('/login', async (req, res) => {
       con.release()
       return res.json({ message: 'Bitte fülle alle Felder aus.' })
     } else {
-      con.query('SELECT * FROM user WHERE email = ?', [req.body.email], (err, users) => {
+      con.query(`SELECT * FROM user WHERE email = ${con.escape(req.body.email)}`, (err, users) => {
         if (err) {
           con.release()
           return res.status(404).json({ err })
@@ -74,7 +74,7 @@ router.post('/login', async (req, res) => {
         }
 
         if (users[0].verified === 1 || users[0].verified === 2) {
-          bcrypt.compare(req.body.password, users[0].pw, (err, isMatch) => {
+          bcrypt.compare(req.body.password, users[0].password, (err, isMatch) => {
             if (err) {
               return res.status(500).json({ err })
             }
@@ -82,7 +82,7 @@ router.post('/login', async (req, res) => {
               return res.json({ message: 'Das Passwort ist falsch.', wrongpw: true })
             } else {
               if (users[0].verified === 2) {
-                con.query('UPDATE user SET verified = 1, verificationcode = "" WHERE id = ' + users[0].id)
+                con.query(`UPDATE user SET verified = 1, verificationcode = "" WHERE id = ${con.escape(users[0].id)}`)
               }
 
               const usertoken = createToken(users[0].id, users[0].email, users[0].username)
@@ -102,9 +102,9 @@ router.post('/login', async (req, res) => {
 router.get('/daten/:id', (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
-            SELECT u.id, u.email, u.username
+            SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.website, u.github, u.twitter, u.instagram
             FROM user u 
-            WHERE u.id = ?
+            WHERE u.id = ${con.escape(req.params.id)}
             `, [req.params.id], (err, schueler) => {
       con.release()
       if (err) {
@@ -115,6 +115,30 @@ router.get('/daten/:id', (req, res) => {
         } else {
           return res.status(500).json({ message: 'user nicht gefunden' })
         }
+      }
+    })
+  })
+})
+
+router.post('/changedata', async (req, res) => {
+  console.log(req.body)
+  database.getConnection((_err, con) => {
+    con.query(`
+    UPDATE user
+    SET 
+    firstname = ${con.escape(req.body.firstname)},
+    lastname = ${con.escape(req.body.lastname)},
+    instagram = ${con.escape(req.body.instagram)},
+    twitter = ${con.escape(req.body.twitter)},
+    github = ${con.escape(req.body.github)},
+    website = ${con.escape(req.body.website)}
+    WHERE id = ${con.escape(req.body.id)}`, (err, user) => {
+      if (err) {
+        con.release()
+        return res.status(500).json({ err })
+      } else {
+        con.release()
+        return res.json({ status: 200, header: 'Juhuu', message: 'Stonks' }).send()
       }
     })
   })
