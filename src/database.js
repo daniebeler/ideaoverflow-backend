@@ -5,7 +5,7 @@ const pool = mysql.createPool({
   user: 'root',
   password: '',
   database: 'ideaoverflowdb',
-  connectionLimit: 400,
+  connectionLimit: 800,
   multipleStatements: false
 })
 
