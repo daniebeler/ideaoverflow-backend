@@ -178,7 +178,7 @@ router.get('/databyusername/:username', (req, res) => {
     con.query(`
             SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.private, count(f.followee_id) as followers, u.country, u.state, u.website, u.dribbble, u.linkedin, u.github, u.twitter, u.instagram, u.profileimage
             FROM user u 
-            inner join follower f on u.id = f.followee_id
+            left join follower f on u.id = f.followee_id
             WHERE u.username = ${con.escape(req.params.username)}
             `, (err, schueler) => {
       con.release()
@@ -318,6 +318,42 @@ router.post('/follow', async (req, res) => {
       } else {
         con.release()
         return res.json({ status: 200, header: 'Juhuu', message: 'Stonks' }).send()
+      }
+    })
+  })
+})
+
+router.post('/unfollow', async (req, res) => {
+  database.getConnection((_err, con) => {
+    con.query(`
+      DELETE FROM follower
+      WHERE followee_id = ${con.escape(req.body.followeeID)} 
+      AND follower_id = ${con.escape(req.body.followerID)}
+    `, (err, user) => {
+      if (err) {
+        con.release()
+        return res.status(500).json({ err })
+      } else {
+        con.release()
+        return res.json({ status: 200, header: 'Juhuu', message: 'Stonks' }).send()
+      }
+    })
+  })
+})
+
+router.post('/checkfollow', async (req, res) => {
+  database.getConnection((_err, con) => {
+    con.query(`
+      SELECT EXISTS(SELECT * FROM follower
+      WHERE followee_id = ${con.escape(req.body.followeeID)} 
+      AND follower_id = ${con.escape(req.body.followerID)}) as following
+    `, (err, user) => {
+      if (err) {
+        con.release()
+        return res.status(500).json({ err })
+      } else {
+        con.release()
+        return res.json({ user }).send()
       }
     })
   })
