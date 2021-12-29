@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken')
 const mailer = require('nodemailer')
 const bcrypt = require('bcrypt')
 const database = require('../database')
+const fetch = require('node-fetch')
 
 const pwStrength = /^(?=.*[A-Za-z])(?=.*\d)[\S]{6,}$/ // mindestens 6 Stellen && eine Zahl && ein Buchstabe
 
@@ -154,7 +155,7 @@ router.get('/verify/:code', (req, res) => {
 router.get('/daten/:id', (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
-            SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.website, u.github, u.twitter, u.instagram
+            SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.private, u.country, u.state, u.website, u.github, u.dribbble, u.linkedin, u.twitter, u.instagram
             FROM user u 
             WHERE id = ${con.escape(req.params.id)}
             `, (err, schueler) => {
@@ -172,17 +173,47 @@ router.get('/daten/:id', (req, res) => {
   })
 })
 
+router.get('/databyusername/:username', (req, res) => {
+  database.getConnection((_err, con) => {
+    con.query(`
+            SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.private, u.country, u.state, u.website, u.dribbble, u.linkedin, u.github, u.twitter, u.instagram
+            FROM user u 
+            WHERE username = ${con.escape(req.params.username)}
+            `, (err, schueler) => {
+      con.release()
+      if (err) {
+        return res.status(500).json({ err })
+      } else {
+        if (schueler[0]) {
+          return res.send(schueler[0])
+        } else {
+          return res.status(500).json({ message: 'user nicht gefunden' })
+        }
+      }
+    })
+  })
+})
+
 router.post('/changedata', async (req, res) => {
+  const base64 = req.body.profilepicture.split(',')[1]
+  const buffer = Buffer.from(base64, 'base64')
+
   database.getConnection((_err, con) => {
     con.query(`
     UPDATE user
     SET 
     firstname = ${con.escape(req.body.firstname)},
     lastname = ${con.escape(req.body.lastname)},
+    private = ${con.escape(req.body.private)},
+    country = ${con.escape(req.body.country)},
+    state = ${con.escape(req.body.state)},
     instagram = ${con.escape(req.body.instagram)},
     twitter = ${con.escape(req.body.twitter)},
+    dribbble = ${con.escape(req.body.dribbble)},
     github = ${con.escape(req.body.github)},
-    website = ${con.escape(req.body.website)}
+    linkedin = ${con.escape(req.body.linkedin)},
+    website = ${con.escape(req.body.website)},
+    profileimage = ${con.escape(buffer)}
     WHERE id = ${con.escape(req.body.id)}`, (err, user) => {
       if (err) {
         con.release()
