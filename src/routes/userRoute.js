@@ -151,13 +151,13 @@ router.get('/verify/:code', (req, res) => {
   })
 })
 
-router.get('/daten/:id', (req, res) => {
+router.get('/databyuserid/:userid', (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
-            SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.private, count(f.followee_id) as followers, u.country, u.state, u.website, u.github, u.dribbble, u.linkedin, u.twitter, u.instagram, u.profileimage
+            SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.creationdate, u.private, count(f.followee_id) as followers, u.country, u.state, u.website, u.github, u.dribbble, u.linkedin, u.twitter, u.instagram, u.profileimage
             FROM user u 
             inner join follower f on u.id = f.followee_id
-            WHERE u.id = ${con.escape(req.params.id)}
+            WHERE u.id = ${con.escape(req.params.userid)}
             `, (err, schueler) => {
       con.release()
       if (err) {
@@ -176,7 +176,7 @@ router.get('/daten/:id', (req, res) => {
 router.get('/databyusername/:username', (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
-            SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.private, count(f.followee_id) as followers, u.country, u.state, u.website, u.dribbble, u.linkedin, u.github, u.twitter, u.instagram, u.profileimage
+            SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.creationdate, u.private, count(f.followee_id) as followers, u.country, u.state, u.website, u.dribbble, u.linkedin, u.github, u.twitter, u.instagram, u.profileimage
             FROM user u 
             left join follower f on u.id = f.followee_id
             WHERE u.username = ${con.escape(req.params.username)}
@@ -284,76 +284,14 @@ router.post('/changepw', async (req, res) => {
   })
 })
 
-router.get('/followees/:id', (req, res) => {
+router.get('/numberoftotalusers', (req, res) => {
+  console.log(req.params)
   database.getConnection((_err, con) => {
-    con.query(`
-          select follower_id, username
-          from follower f
-          inner join user u on followee_id = u.id
-          where followee_id = ${con.escape(req.params.id)}
-            `, (err, schueler) => {
-      con.release()
+    con.query('SELECT count(id) as numberoftotalusers FROM user', (err, result) => {
       if (err) {
         return res.status(500).json({ err })
       } else {
-        if (schueler[0]) {
-          return res.send(schueler[0])
-        } else {
-          return res.status(500).json({ message: 'user nicht gefunden' })
-        }
-      }
-    })
-  })
-})
-
-router.post('/follow', async (req, res) => {
-  database.getConnection((_err, con) => {
-    con.query(`
-    INSERT INTO follower (follower_id, followee_id)
-    VALUES (${con.escape(req.body.followerID)}, ${con.escape(req.body.followeeID)})
-    `, (err, user) => {
-      if (err) {
-        con.release()
-        return res.status(500).json({ err })
-      } else {
-        con.release()
-        return res.json({ status: 200, header: 'Juhuu', message: 'Stonks' }).send()
-      }
-    })
-  })
-})
-
-router.post('/unfollow', async (req, res) => {
-  database.getConnection((_err, con) => {
-    con.query(`
-      DELETE FROM follower
-      WHERE followee_id = ${con.escape(req.body.followeeID)} 
-      AND follower_id = ${con.escape(req.body.followerID)}
-    `, (err, user) => {
-      if (err) {
-        con.release()
-        return res.status(500).json({ err })
-      } else {
-        con.release()
-        return res.json({ status: 200, header: 'Juhuu', message: 'Stonks' }).send()
-      }
-    })
-  })
-})
-
-router.post('/checkfollow', async (req, res) => {
-  database.getConnection((_err, con) => {
-    con.query(`
-      SELECT EXISTS(SELECT * FROM follower
-      WHERE followee_id = ${con.escape(req.body.followeeID)} 
-      AND follower_id = ${con.escape(req.body.followerID)}) as following
-    `, (err, user) => {
-      if (err) {
-        con.release()
-        return res.status(500).json({ err })
-      } else {
-        con.release()
-        return res.json({ user }).send()
+        return res.send(result[0])
       }
     })
   })

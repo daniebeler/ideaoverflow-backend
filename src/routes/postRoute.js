@@ -5,7 +5,7 @@ const database = require('../database')
 router.post('/create', async (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
-    INSERT INTO posts (OwnerUserId, Title, Body)
+    INSERT INTO post (fk_owner_user_id, title, body)
     VALUES (${con.escape(req.body.userID)}, ${con.escape(req.body.header)}, ${con.escape(req.body.body)})
     `, (err, user) => {
       if (err) {
@@ -19,17 +19,47 @@ router.post('/create', async (req, res) => {
   })
 })
 
-router.get('/latest', (req, res) => {
+router.get('/numberoftotalposts', (req, res) => {
+  console.log(req.params)
   database.getConnection((_err, con) => {
-    con.query('SELECT * FROM posts', (err, result) => {
+    con.query('SELECT count(id) as numberoftotalposts FROM post', (err, result) => {
       if (err) {
         return res.status(500).json({ err })
       } else {
-        if (result[0]) {
-          return res.send(result)
-        } else {
-          return res.status(500).json({ message: 'user nicht gefunden' })
-        }
+        return res.send(result[0])
+      }
+    })
+  })
+})
+
+router.get('/newest/:take/:skip', (req, res) => {
+  console.log(req.params)
+  database.getConnection((_err, con) => {
+    con.query(`SELECT * FROM post ORDER BY id limit ${req.params.take} offset ${req.params.skip}`, (err, result) => {
+      if (err) {
+        return res.status(500).json({ err })
+      } else {
+        return res.send(result)
+      }
+    })
+  })
+})
+
+router.get('/newest/:take/:skip/:username', (req, res) => {
+  database.getConnection((_err, con) => {
+    con.query(`
+      SELECT *
+      FROM post p
+      INNER JOIN user u
+      ON p.fk_owner_user_id = u.id
+      WHERE u.username = "${req.params.username}"
+      ORDER BY p.id 
+      limit ${req.params.take} 
+      offset ${req.params.skip}`, (err, result) => {
+      if (err) {
+        return res.status(500).json({ err })
+      } else {
+        return res.send(result)
       }
     })
   })

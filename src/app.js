@@ -11,6 +11,9 @@ app.use('/user', userRoute)
 const postRoute = require('./routes/postRoute')
 app.use('/post', postRoute)
 
+const followerRoute = require('./routes/followerRoute')
+app.use('/follower', followerRoute)
+
 app.listen(8080, () => {
   console.log('Server started')
 })
