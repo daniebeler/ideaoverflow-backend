@@ -154,9 +154,10 @@ router.get('/verify/:code', (req, res) => {
 router.get('/databyuserid/:userid', (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
-            SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.creationdate, u.private, count(f.followee_id) as followers, u.country, u.state, u.website, u.github, u.dribbble, u.linkedin, u.twitter, u.instagram, u.profileimage
+            SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.creationdate, u.private, count(f.followee_id) as followers, count(ff.follower_id) as following, u.country, u.state, u.website, u.github, u.dribbble, u.linkedin, u.twitter, u.instagram, u.profileimage
             FROM user u 
-            inner join follower f on u.id = f.followee_id
+            left join follower f on u.id = f.followee_id
+            left join follower ff on u.id = ff.follower_id
             WHERE u.id = ${con.escape(req.params.userid)}
             `, (err, schueler) => {
       con.release()
@@ -176,9 +177,10 @@ router.get('/databyuserid/:userid', (req, res) => {
 router.get('/databyusername/:username', (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
-            SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.creationdate, u.private, count(f.followee_id) as followers, u.country, u.state, u.website, u.dribbble, u.linkedin, u.github, u.twitter, u.instagram, u.profileimage
+            SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.creationdate, u.private, count(f.followee_id) as followers, count(ff.follower_id) as following, u.country, u.state, u.website, u.dribbble, u.linkedin, u.github, u.twitter, u.instagram, u.profileimage
             FROM user u 
             left join follower f on u.id = f.followee_id
+            left join follower ff on u.id = ff.follower_id
             WHERE u.username = ${con.escape(req.params.username)}
             `, (err, schueler) => {
       con.release()

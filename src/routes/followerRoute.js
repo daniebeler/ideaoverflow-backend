@@ -30,11 +30,10 @@ router.post('/follow', async (req, res) => {
     INSERT INTO follower (follower_id, followee_id)
     VALUES (${con.escape(req.body.followerID)}, ${con.escape(req.body.followeeID)})
     `, (err, user) => {
+      con.release()
       if (err) {
-        con.release()
         return res.status(500).json({ err })
       } else {
-        con.release()
         return res.json({ status: 200, header: 'Juhuu', message: 'Stonks' }).send()
       }
     })
@@ -47,12 +46,11 @@ router.post('/unfollow', async (req, res) => {
       DELETE FROM follower
       WHERE followee_id = ${con.escape(req.body.followeeID)} 
       AND follower_id = ${con.escape(req.body.followerID)}
-    `, (err, user) => {
+    `, (err) => {
+      con.release()
       if (err) {
-        con.release()
         return res.status(500).json({ err })
       } else {
-        con.release()
         return res.json({ status: 200, header: 'Juhuu', message: 'Stonks' }).send()
       }
     })
@@ -66,11 +64,10 @@ router.post('/checkfollow', async (req, res) => {
       WHERE followee_id = ${con.escape(req.body.followeeID)} 
       AND follower_id = ${con.escape(req.body.followerID)}) as following
     `, (err, user) => {
+      con.release()
       if (err) {
-        con.release()
         return res.status(500).json({ err })
       } else {
-        con.release()
         return res.json({ user }).send()
       }
     })
