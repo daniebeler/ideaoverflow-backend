@@ -154,7 +154,7 @@ router.get('/verify/:code', (req, res) => {
 router.get('/databyuserid/:userid', (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
-            SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.creationdate, u.private, count(f.followee_id) as followers, count(ff.follower_id) as following, u.country, u.state, u.website, u.github, u.dribbble, u.linkedin, u.twitter, u.instagram, u.profileimage
+            SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.bio, u.creationdate, u.private, count(f.followee_id) as followers, count(ff.follower_id) as following, u.country, u.state, u.website, u.github, u.dribbble, u.linkedin, u.twitter, u.instagram, u.profileimage
             FROM user u 
             left join follower f on u.id = f.followee_id
             left join follower ff on u.id = ff.follower_id
@@ -177,7 +177,7 @@ router.get('/databyuserid/:userid', (req, res) => {
 router.get('/databyusername/:username', (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
-            SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.creationdate, u.private, count(f.followee_id) as followers, count(ff.follower_id) as following, u.country, u.state, u.website, u.dribbble, u.linkedin, u.github, u.twitter, u.instagram, u.profileimage
+            SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.bio, u.creationdate, u.private, count(f.followee_id) as followers, count(ff.follower_id) as following, u.country, u.state, u.website, u.dribbble, u.linkedin, u.github, u.twitter, u.instagram, u.profileimage
             FROM user u 
             left join follower f on u.id = f.followee_id
             left join follower ff on u.id = ff.follower_id
@@ -215,6 +215,7 @@ router.post('/changedata', async (req, res) => {
     private = ${con.escape(req.body.private)},
     country = ${con.escape(req.body.country)},
     state = ${con.escape(req.body.state)},
+    bio = ${con.escape(req.body.bio)},
     instagram = ${con.escape(req.body.instagram)},
     twitter = ${con.escape(req.body.twitter)},
     dribbble = ${con.escape(req.body.dribbble)},
