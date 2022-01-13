@@ -68,9 +68,9 @@ router.post('/register', async (req, res) => {
       bcrypt.genSalt(512, (_err, salt) => {
         bcrypt.hash(req.body.password1, salt, (_err, enc) => {
           con.query(`
-                            INSERT INTO user (email, username, password, verificationcode) 
-                            VALUES (${con.escape(req.body.email)}, ${con.escape(req.body.username)}, ${con.escape(enc)}, ${con.escape(code)})
-                            `, (err, _result) => {
+            INSERT INTO user (email, username, password, verificationcode, profileimage) 
+            VALUES (${con.escape(req.body.email)}, ${con.escape(req.body.username)}, ${con.escape(enc)}, ${con.escape(code)}, ${con.escape(profileimage)})
+            `, (err, _result) => {
             if (err) {
               con.release()
               return res.status(500).json({ err })

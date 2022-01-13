@@ -77,11 +77,10 @@ router.post('/checkfollow', async (req, res) => {
 router.get('/followersbyusername/:username', (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
-      select *
-      from user u
-      inner join follower f
-      on u.id = f.followee_id 
-      where u.username = ${con.escape(req.params.username)}
+    select u.*
+      from follower f
+      inner join user u on u.id = f.follower_id 
+      where f.followee_id = (select id from user where username = ${con.escape(req.params.username)})
       `, (err, schueler) => {
       con.release()
       if (err) {
@@ -96,11 +95,10 @@ router.get('/followersbyusername/:username', (req, res) => {
 router.get('/followeesbyusername/:username', (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
-      select *
-      from user u
-      inner join follower f
-      on u.id = f.follower_id 
-      where u.username = ${con.escape(req.params.username)}
+    select u.*
+    from follower f
+    inner join user u on u.id = f.followee_id 
+    where f.follower_id = (select id from user where username = ${con.escape(req.params.username)})
       `, (err, schueler) => {
       con.release()
       if (err) {
