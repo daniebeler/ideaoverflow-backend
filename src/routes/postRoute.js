@@ -22,8 +22,8 @@ router.get('/numberoftotalposts', (req, res) => {
   console.log(req.params)
   database.getConnection((_err, con) => {
     con.query('SELECT count(id) as numberoftotalposts FROM post', (err, result) => {
+      con.release()
       if (err) {
-        con.release()
         return res.status(500).json({ err })
       } else {
         return res.send(result[0])
@@ -35,9 +35,17 @@ router.get('/numberoftotalposts', (req, res) => {
 router.get('/newest/:take/:skip', (req, res) => {
   console.log(req.params)
   database.getConnection((_err, con) => {
-    con.query(`SELECT * FROM post ORDER BY id limit ${req.params.take} offset ${req.params.skip}`, (err, result) => {
+    con.query(`
+    SELECT *, (SELECT count(post_id) FROM vote v WHERE v.value = 1) as upvotes, (SELECT count(post_id) FROM vote v WHERE v.value = -1) as downvotes
+    FROM post p
+    INNER JOIN user u ON p.fk_owner_user_id = u.id
+    LEFT JOIN vote v ON p.id = v.post_id
+    GROUP BY p.id
+    ORDER BY p.creation_date 
+    limit ${req.params.take} 
+    offset ${req.params.skip}`, (err, result) => {
+      con.release()
       if (err) {
-        con.release()
         return res.status(500).json({ err })
       } else {
         return res.send(result)
@@ -61,6 +69,7 @@ router.get('/newest/:take/:skip/:username', (req, res) => {
       if (err) {
         return res.status(500).json({ err })
       } else {
+        console.log(result)
         return res.send(result)
       }
     })

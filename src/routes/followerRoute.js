@@ -29,7 +29,7 @@ router.post('/follow', async (req, res) => {
     con.query(`
     INSERT INTO follower (follower_id, followee_id)
     VALUES (${con.escape(req.body.followerID)}, ${con.escape(req.body.followeeID)})
-    `, (err, user) => {
+    `, (err) => {
       con.release()
       if (err) {
         return res.status(500).json({ err })

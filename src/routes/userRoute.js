@@ -69,15 +69,14 @@ router.post('/register', async (req, res) => {
         bcrypt.hash(req.body.password1, salt, (_err, enc) => {
           con.query(`
             INSERT INTO user (email, username, password, verificationcode, profileimage) 
-            VALUES (${con.escape(req.body.email)}, ${con.escape(req.body.username)}, ${con.escape(enc)}, ${con.escape(code)}, ${con.escape(profileimage)})
+            VALUES (${con.escape(req.body.email)}, ${con.escape(req.body.username)}, ${con.escape(enc)}, ${con.escape(code)}, ${con.escape(req.body.profileimage)})
             `, (err, _result) => {
+            con.release()
             if (err) {
-              con.release()
               return res.status(500).json({ err })
             }
 
             sendMail(req.body.email, 'Email verification', 'Open this link to enable your account: http://localhost:8100/verify/' + code)
-            con.release()
             return res.json({ header: 'Gratuliere!', message: 'Der Benutzer wurde angelegt. Bitte bestätige noch deine E-Mail, sie kann auch im Spam-Ordner gelandet sein. Danach kannst du kannst dich anmelden.' })
           })
         })
@@ -87,11 +86,10 @@ router.post('/register', async (req, res) => {
 })
 
 router.post('/login', async (req, res) => {
-  database.getConnection((_err, con) => {
-    if (!req.body.email || !req.body.password) {
-      con.release()
-      return res.json({ message: 'Bitte fülle alle Felder aus.' })
-    } else {
+  if (!req.body.email || !req.body.password) {
+    return res.json({ message: 'Bitte fülle alle Felder aus.' })
+  } else {
+    database.getConnection((_err, con) => {
       con.query(`SELECT * FROM user WHERE email = ${con.escape(req.body.email)}`, (err, users) => {
         if (err) {
           con.release()
@@ -99,19 +97,24 @@ router.post('/login', async (req, res) => {
         }
 
         if (users.length === 0) {
+          con.release()
           return res.json({ message: 'Bist du sicher, dass du deine E-Mail richtig geschrieben hast? Diesen Benutzer gibt es nämlich nicht.' })
         }
 
         if (users[0].verified === 1 || users[0].verified === 2) {
           bcrypt.compare(req.body.password, users[0].password, (err, isMatch) => {
             if (err) {
+              con.release()
               return res.status(500).json({ err })
             }
             if (!isMatch) {
+              con.release()
               return res.json({ message: 'Das Passwort ist falsch.', wrongpw: true })
             } else {
               if (users[0].verified === 2) {
-                con.query(`UPDATE user SET verified = 1, verificationcode = "" WHERE id = ${con.escape(users[0].id)}`)
+                con.query(`UPDATE user SET verified = 1, verificationcode = "" WHERE id = ${con.escape(users[0].id)}`, () => {
+                  con.release()
+                })
               }
 
               const usertoken = createToken(users[0].id, users[0].email, users[0].username)
@@ -124,8 +127,8 @@ router.post('/login', async (req, res) => {
           return res.json({ message: 'Du bist noch nicht verifiziert. Willst du den Verifizierungslink erneut senden?', notverified: true })
         }
       })
-    }
-  })
+    })
+  }
 })
 
 router.get('/verify/:code', (req, res) => {
@@ -138,12 +141,11 @@ router.get('/verify/:code', (req, res) => {
         con.release()
         return res.status(200).json({ verified: false })
       } else {
-        con.query(`UPDATE user SET verified = true, verificationcode = "" WHERE verificationcode = ${con.escape(req.params.code)}`, (err, result) => {
+        con.query(`UPDATE user SET verified = true, verificationcode = "" WHERE verificationcode = ${con.escape(req.params.code)}`, (err) => {
+          con.release()
           if (err) {
-            con.release()
             return res.status(500).json(err)
           }
-          con.release()
           return res.status(200).json({ verified: true })
         })
       }
@@ -223,12 +225,11 @@ router.post('/changedata', async (req, res) => {
     linkedin = ${con.escape(req.body.linkedin)},
     website = ${con.escape(req.body.website)},
     profileimage = ${con.escape(buffer)}
-    WHERE id = ${con.escape(req.body.id)}`, (err, user) => {
+    WHERE id = ${con.escape(req.body.id)}`, (err) => {
+      con.release()
       if (err) {
-        con.release()
         return res.status(500).json({ err })
       } else {
-        con.release()
         return res.json({ status: 200, header: 'Juhuu', message: 'Stonks' }).send()
       }
     })
@@ -269,11 +270,10 @@ router.post('/changepw', async (req, res) => {
           bcrypt.genSalt(512, (_err, salt) => {
             bcrypt.hash(req.body.new, salt, (_err, enc) => {
               con.query(`UPDATE user SET password = ${con.escape(enc)} WHERE id = ${con.escape(req.body.id)}`, (err) => {
+                con.release()
                 if (err) {
-                  con.release()
                   return res.status(500).json({ err })
                 }
-                con.release()
                 return res.json({ header: 'Erfolgreich!', message: 'Passwort wurde geändert!' })
               })
             })
@@ -287,10 +287,10 @@ router.post('/changepw', async (req, res) => {
   })
 })
 
-router.get('/numberoftotalusers', (req, res) => {
-  console.log(req.params)
+router.get('/numberoftotalusers', (_req, res) => {
   database.getConnection((_err, con) => {
     con.query('SELECT count(id) as numberoftotalusers FROM user', (err, result) => {
+      con.release()
       if (err) {
         return res.status(500).json({ err })
       } else {
