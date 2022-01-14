@@ -32,39 +32,31 @@ router.get('/numberoftotalposts', (req, res) => {
   })
 })
 
-router.get('/newest/:take/:skip', (req, res) => {
-  console.log(req.params)
-  database.getConnection((_err, con) => {
-    con.query(`
-    SELECT *, (SELECT count(post_id) FROM vote v WHERE v.value = 1) as upvotes, (SELECT count(post_id) FROM vote v WHERE v.value = -1) as downvotes
-    FROM post p
-    INNER JOIN user u ON p.fk_owner_user_id = u.id
-    LEFT JOIN vote v ON p.id = v.post_id
-    GROUP BY p.id
-    ORDER BY p.creation_date 
-    limit ${req.params.take} 
-    offset ${req.params.skip}`, (err, result) => {
-      con.release()
-      if (err) {
-        return res.status(500).json({ err })
-      } else {
-        return res.send(result)
-      }
-    })
-  })
-})
+router.post('/posts', (req, res) => {
+  let usernameFilter = ''
+  let searchFilter = ''
 
-router.get('/newest/:take/:skip/:username', (req, res) => {
+  if (req.body.username) {
+    usernameFilter = 'WHERE u.username = "' + req.body.username + '"'
+  }
+
+  if (req.body.searchTerm) {
+    searchFilter = 'WHERE u.username LIKE "' + req.body.searchTerm + '"'
+  }
+
   database.getConnection((_err, con) => {
     con.query(`
-      SELECT *
+      SELECT p.*, u.*, vv.value as votevalue, (SELECT count(post_id) FROM vote v WHERE v.value = 1) as upvotes, (SELECT count(post_id) FROM vote v WHERE v.value = -1) as downvotes
       FROM post p
-      INNER JOIN user u
-      ON p.fk_owner_user_id = u.id
-      WHERE u.username = "${req.params.username}"
+      INNER JOIN user u ON p.fk_owner_user_id = u.id
+      LEFT JOIN vote vv ON ${req.body.currenUserId} = vv.user_id
+      LEFT JOIN vote v ON p.id = v.post_id
+      ${usernameFilter}
+      ${searchFilter}
+      GROUP BY p.id
       ORDER BY p.id 
-      limit ${req.params.take} 
-      offset ${req.params.skip}`, (err, result) => {
+      limit ${req.body.take} 
+      offset ${req.body.skip}`, (err, result) => {
       con.release()
       if (err) {
         return res.status(500).json({ err })
