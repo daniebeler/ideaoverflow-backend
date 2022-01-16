@@ -53,10 +53,11 @@ router.post('/posts', (req, res) => {
 
   database.getConnection((_err, con) => {
     con.query(`
-      SELECT p.*, u.*, vv.value as votevalue, (SELECT count(post_id) FROM vote v WHERE v.value = 1) as upvotes, (SELECT count(post_id) FROM vote v WHERE v.value = -1) as downvotes
+      SELECT p.*, u.profileimage, u.username, usp.post_id as saved, vv.value as votevalue, (SELECT count(post_id) FROM vote v WHERE v.value = 1) as upvotes, (SELECT count(post_id) FROM vote v WHERE v.value = -1) as downvotes
       FROM post p
       INNER JOIN user u ON p.fk_owner_user_id = u.id
-      LEFT JOIN (SELECT * FROM vote WHERE user_id = 1) vv ON p.fk_owner_user_id = vv.user_id
+      LEFT JOIN (SELECT * FROM vote WHERE user_id = ${req.body.currentUserId}) vv ON p.fk_owner_user_id = vv.user_id
+      LEFT JOIN (SELECT * FROM user_saves_post WHERE user_id = ${req.body.currentUserId}) usp ON p.id = usp.post_id
       LEFT JOIN vote v ON p.id = v.post_id
       ${savedFilter}
       ${usernameFilter}
@@ -83,6 +84,41 @@ router.post('/vote', (req, res) => {
       INSERT INTO vote (user_id, post_id, value)
       VALUES(${req.body.userId}, ${req.body.postId}, ${req.body.voteValue})
       ON DUPLICATE KEY UPDATE value = ${req.body.voteValue}
+      `, (err, result) => {
+      con.release()
+      if (err) {
+        return res.status(500).json({ err })
+      } else {
+        console.log(result)
+        return res.send(result)
+      }
+    })
+  })
+})
+
+router.post('/save', (req, res) => {
+  console.log('hola')
+  database.getConnection((_err, con) => {
+    con.query(`
+      INSERT IGNORE INTO user_saves_post (user_id, post_id)
+      VALUES(${req.body.userId}, ${req.body.postId})
+      `, (err, result) => {
+      con.release()
+      if (err) {
+        return res.status(500).json({ err })
+      } else {
+        console.log(result)
+        return res.send(result)
+      }
+    })
+  })
+})
+
+router.post('/unsave', (req, res) => {
+  console.log('hola')
+  database.getConnection((_err, con) => {
+    con.query(`
+      DELETE FROM user_saves_post WHERE user_id = ${req.body.userId} AND post_id = ${req.body.postId}
       `, (err, result) => {
       con.release()
       if (err) {
