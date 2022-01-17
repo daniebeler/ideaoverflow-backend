@@ -53,12 +53,11 @@ router.post('/posts', (req, res) => {
 
   database.getConnection((_err, con) => {
     con.query(`
-      SELECT p.*, u.profileimage, u.username, usp.post_id as saved, vv.value as votevalue, (SELECT count(post_id) FROM vote v WHERE v.value = 1) as upvotes, (SELECT count(post_id) FROM vote v WHERE v.value = -1) as downvotes
+      SELECT p.*, u.profileimage, u.username, usp.post_id as saved, vv.value as votevalue, (SELECT count(post_id) FROM vote vvv WHERE vvv.post_id = p.id AND vvv.value = 1) as upvotes, (SELECT count(post_id) FROM vote vvv WHERE vvv.post_id = p.id AND vvv.value = -1) as downvotes
       FROM post p
       INNER JOIN user u ON p.fk_owner_user_id = u.id
-      LEFT JOIN (SELECT * FROM vote WHERE user_id = ${req.body.currentUserId}) vv ON p.fk_owner_user_id = vv.user_id
+      LEFT JOIN (SELECT * FROM vote WHERE user_id = ${req.body.currentUserId}) vv ON p.id = vv.post_id
       LEFT JOIN (SELECT * FROM user_saves_post WHERE user_id = ${req.body.currentUserId}) usp ON p.id = usp.post_id
-      LEFT JOIN vote v ON p.id = v.post_id
       ${savedFilter}
       ${usernameFilter}
       ${searchFilter}
