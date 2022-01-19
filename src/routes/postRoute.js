@@ -33,10 +33,17 @@ router.get('/numberoftotalposts', (req, res) => {
 })
 
 router.post('/posts', (req, res) => {
+  let userIsLoggedInSelect = ''
+  let userIsLoggedInJoin = ''
   let usernameFilter = ''
   let searchFilter = ''
   let savedFilter = ''
   let order = 'ORDER BY p.id'
+
+  if (req.body.currentUserId) {
+    userIsLoggedInSelect = 'usp.post_id as saved, vv.value as votevalue,'
+    userIsLoggedInJoin = 'LEFT JOIN (SELECT * FROM vote WHERE user_id = ' + req.body.currentUserId + ') vv ON p.id = vv.post_id LEFT JOIN (SELECT * FROM user_saves_post WHERE user_id = + ' + req.body.currentUserId + ') usp ON p.id = usp.post_id'
+  }
 
   if (req.body.username) {
     usernameFilter = 'WHERE u.username = "' + req.body.username + '"'
@@ -53,11 +60,10 @@ router.post('/posts', (req, res) => {
 
   database.getConnection((_err, con) => {
     con.query(`
-      SELECT p.*, u.profileimage, u.username, usp.post_id as saved, vv.value as votevalue, (SELECT count(post_id) FROM vote vvv WHERE vvv.post_id = p.id AND vvv.value = 1) as upvotes, (SELECT count(post_id) FROM vote vvv WHERE vvv.post_id = p.id AND vvv.value = -1) as downvotes
+      SELECT p.*, u.profileimage, u.username, ${userIsLoggedInSelect} (SELECT count(post_id) FROM vote vvv WHERE vvv.post_id = p.id AND vvv.value = 1) as upvotes, (SELECT count(post_id) FROM vote vvv WHERE vvv.post_id = p.id AND vvv.value = -1) as downvotes
       FROM post p
       INNER JOIN user u ON p.fk_owner_user_id = u.id
-      LEFT JOIN (SELECT * FROM vote WHERE user_id = ${req.body.currentUserId}) vv ON p.id = vv.post_id
-      LEFT JOIN (SELECT * FROM user_saves_post WHERE user_id = ${req.body.currentUserId}) usp ON p.id = usp.post_id
+      ${userIsLoggedInJoin}
       ${savedFilter}
       ${usernameFilter}
       ${searchFilter}
