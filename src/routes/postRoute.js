@@ -18,8 +18,24 @@ router.post('/create', async (req, res) => {
   })
 })
 
+router.post('/update', async (req, res) => {
+  database.getConnection((_err, con) => {
+    con.query(`
+    UPDATE post
+    SET title = ${con.escape(req.body.title)}, body = ${con.escape(req.body.body)}
+    WHERE id = ${con.escape(req.body.postId)}
+    `, (err) => {
+      con.release()
+      if (err) {
+        return res.status(500).json({ err })
+      } else {
+        return res.status(200).json({ status: 200, header: 'Juhuu', message: 'Stonks' })
+      }
+    })
+  })
+})
+
 router.get('/numberoftotalposts', (req, res) => {
-  console.log(req.params)
   database.getConnection((_err, con) => {
     con.query('SELECT count(id) as numberoftotalposts FROM post', (err, result) => {
       con.release()
@@ -60,7 +76,7 @@ router.post('/posts', (req, res) => {
 
   database.getConnection((_err, con) => {
     con.query(`
-      SELECT p.*, u.profileimage, u.username, ${userIsLoggedInSelect} (SELECT count(post_id) FROM vote vvv WHERE vvv.post_id = p.id AND vvv.value = 1) as upvotes, (SELECT count(post_id) FROM vote vvv WHERE vvv.post_id = p.id AND vvv.value = -1) as downvotes
+      SELECT p.*, u.id as ownerid, u.profileimage, u.username, ${userIsLoggedInSelect} (SELECT count(post_id) FROM vote vvv WHERE vvv.post_id = p.id AND vvv.value = 1) as upvotes, (SELECT count(post_id) FROM vote vvv WHERE vvv.post_id = p.id AND vvv.value = -1) as downvotes
       FROM post p
       INNER JOIN user u ON p.fk_owner_user_id = u.id
       ${userIsLoggedInJoin}
@@ -75,7 +91,6 @@ router.post('/posts', (req, res) => {
       if (err) {
         return res.status(500).json({ err })
       } else {
-        console.log(result)
         return res.send(result)
       }
     })
@@ -83,7 +98,6 @@ router.post('/posts', (req, res) => {
 })
 
 router.post('/vote', (req, res) => {
-  console.log('hola')
   database.getConnection((_err, con) => {
     con.query(`
       INSERT INTO vote (user_id, post_id, value)
@@ -94,7 +108,6 @@ router.post('/vote', (req, res) => {
       if (err) {
         return res.status(500).json({ err })
       } else {
-        console.log(result)
         return res.send(result)
       }
     })
@@ -102,7 +115,6 @@ router.post('/vote', (req, res) => {
 })
 
 router.post('/save', (req, res) => {
-  console.log('hola')
   database.getConnection((_err, con) => {
     con.query(`
       INSERT IGNORE INTO user_saves_post (user_id, post_id)
@@ -112,7 +124,6 @@ router.post('/save', (req, res) => {
       if (err) {
         return res.status(500).json({ err })
       } else {
-        console.log(result)
         return res.send(result)
       }
     })
@@ -120,7 +131,6 @@ router.post('/save', (req, res) => {
 })
 
 router.post('/unsave', (req, res) => {
-  console.log('hola')
   database.getConnection((_err, con) => {
     con.query(`
       DELETE FROM user_saves_post WHERE user_id = ${req.body.userId} AND post_id = ${req.body.postId}
@@ -129,7 +139,6 @@ router.post('/unsave', (req, res) => {
       if (err) {
         return res.status(500).json({ err })
       } else {
-        console.log(result)
         return res.send(result)
       }
     })
