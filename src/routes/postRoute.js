@@ -12,7 +12,7 @@ router.post('/create', async (req, res) => {
       if (err) {
         return res.status(500).json({ err })
       } else {
-        return res.status(200).json({ status: 200, header: 'Juhuu', message: 'Stonks' })
+        return res.status(200).json({ status: 200, header: 'Nice!', message: 'Your post is now online' })
       }
     })
   })
@@ -29,7 +29,7 @@ router.post('/update', async (req, res) => {
       if (err) {
         return res.status(500).json({ err })
       } else {
-        return res.status(200).json({ status: 200, header: 'Juhuu', message: 'Stonks' })
+        return res.status(200).json({ status: 200, header: 'Nice!', message: 'Your post has been updated!' })
       }
     })
   })
@@ -54,7 +54,7 @@ router.post('/posts', (req, res) => {
   let usernameFilter = ''
   let searchFilter = ''
   let savedFilter = ''
-  let order = 'ORDER BY p.id'
+  let order = 'ORDER BY p.creation_date DESC'
 
   if (req.body.currentUserId) {
     userIsLoggedInSelect = 'usp.post_id as saved, vv.value as votevalue,'
@@ -83,7 +83,7 @@ router.post('/posts', (req, res) => {
       ${savedFilter}
       ${usernameFilter}
       ${searchFilter}
-      GROUP BY p.id
+      GROUP BY p.id 
       ${order} 
       limit ${req.body.take} 
       offset ${req.body.skip}`, (err, result) => {
