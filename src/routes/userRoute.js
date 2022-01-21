@@ -46,6 +46,15 @@ router.get('/databyusername/:username', (req, res) => {
 })
 
 router.post('/changedata', async (req, res) => {
+  if (/^(http:\/\/)/.test(req.body.website)) {
+    req.body.website = req.body.website.slice(7)
+    console.log(req.body.website)
+  }
+  else if (/^(https:\/\/)/.test(req.body.website)) {
+    req.body.website = req.body.website.slice(8)
+    console.log(req.body.website)
+  }
+
   database.getConnection((_err, con) => {
     con.query(`
     UPDATE user
