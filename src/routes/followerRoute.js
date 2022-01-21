@@ -81,12 +81,12 @@ router.get('/followersbyusername/:username', (req, res) => {
       from follower f
       inner join user u on u.id = f.follower_id 
       where f.followee_id = (select id from user where username = ${con.escape(req.params.username)})
-      `, (err, schueler) => {
+      `, (err, user) => {
       con.release()
       if (err) {
         return res.status(500).json({ err })
       } else {
-        return res.send(schueler)
+        return res.send(user)
       }
     })
   })
@@ -99,12 +99,12 @@ router.get('/followeesbyusername/:username', (req, res) => {
     from follower f
     inner join user u on u.id = f.followee_id 
     where f.follower_id = (select id from user where username = ${con.escape(req.params.username)})
-      `, (err, schueler) => {
+      `, (err, user) => {
       con.release()
       if (err) {
         return res.status(500).json({ err })
       } else {
-        return res.send(schueler)
+        return res.send(user)
       }
     })
   })

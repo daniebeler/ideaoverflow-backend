@@ -8,6 +8,9 @@ const fs = require('fs')
 app.use(cors())
 app.use(express.json())
 
+const registrationRoute = require('./routes/registrationRoute')
+app.use('/registration', registrationRoute)
+
 const userRoute = require('./routes/userRoute')
 app.use('/user', userRoute)
 
