@@ -45,6 +45,23 @@ router.get('/databyusername/:username', (req, res) => {
   })
 })
 
+router.get('/usersbysearchterm/:searchterm', (req, res) => {
+  database.getConnection((_err, con) => {
+    con.query(`
+    select *
+    from user
+    where username = ${con.escape(req.params.searchterm)}
+      `, (err, user) => {
+      con.release()
+      if (err) {
+        return res.status(500).json({ err })
+      } else {
+        return res.send(user)
+      }
+    })
+  })
+})
+
 router.post('/changedata', async (req, res) => {
   if (/^(http:\/\/)/.test(req.body.website)) {
     req.body.website = req.body.website.slice(7)
