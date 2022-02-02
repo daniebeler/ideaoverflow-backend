@@ -176,4 +176,90 @@ router.post('/sendverificationmailagain', async (req, res) => {
   })
 })
 
+router.post('/resetpassword', async (req, res) => {
+  database.getConnection((err, con) => {
+    if (err) {
+      return res.status(500).json(err)
+    }
+    const code = '0' + Math.random().toString(36).substr(2)
+    console.log('Code generated: ' + code)
+    con.query('UPDATE user SET verified = 2, verificationcode = ? WHERE email = ?', [code, req.body.email], (err, result) => {
+      if (err) {
+        con.release()
+        return res.status(500).json(err)
+      } else if (result.affectedRows === 0) {
+        con.release()
+        return res.status(200).json({ header: 'Fehler', message: 'Die E-Mail wurde nicht gefunden' })
+      }
+      console.log(result)
+      sendMail(req.body.email,
+        'Reset password',
+        'Open the following link to reset your password: https://ideaoverflow.xyz/resetpassword/' + code)
+      return res.status(200).json({ header: 'Nice!', message: 'Mail sent to ' + req.body.email + '!' })
+    })
+  })
+})
+
+router.get('/checkresetcode/:code', (req, res) => {
+  database.getConnection((_err, con) => {
+    con.query('SELECT * FROM user WHERE verificationcode = ?', [req.params.code], (err, result) => {
+      con.release()
+      if (err) {
+        return res.status(500).json({ err })
+      }
+      if (result.length === 0) {
+        return res.status(200).json({ message: 'This code does not exist!', exists: false })
+      }
+      if (result.length === 1) {
+        return res.status(200).json({ exists: true })
+      } else {
+        return res.status(200).json({ message: 'This code exists multiple times. Please contact hiebeler.daniel@gmail.com', exists: false })
+      }
+    })
+  })
+})
+
+router.post('/setpassword', async (req, res) => {
+  database.getConnection((err, con) => {
+    if (err) {
+      return res.status(500).json(err)
+    }
+    console.log('connected')
+    if (!req.body.pw1 || !req.body.pw2) {
+      con.release()
+      return res.json({ header: 'Error', message: 'Informationen unvollständig!', stay: true })
+    } else if (req.body.pw1 !== req.body.pw2) {
+      con.release()
+      return res.json({ header: 'Error', message: 'Passwords are not the same!', stay: true })
+    } else if (!pwStrength.test(req.body.pw1)) {
+      con.release()
+      return res.json({ header: 'Error', message: 'The password must be at least 6 characters long. There must be at least one letter and one number.', stay: true })
+    }
+
+    con.query('SELECT * FROM user WHERE verificationcode = ?', [req.body.vcode], (err, users) => {
+      if (err) {
+        con.release()
+        return res.status(500).json({ err })
+      }
+      if (users.length === 0) {
+        con.release()
+        return res.json({ header: 'Error', message: 'This code does not exist', stay: false })
+      }
+
+      bcrypt.genSalt(512, (_err, salt) => {
+        bcrypt.hash(req.body.pw1, salt, (_err, enc) => {
+          con.query('UPDATE user SET verified = 1, password = ?, verificationcode = ? WHERE verificationcode = ?', [enc, '', req.body.vcode], (err, _resutl) => {
+            if (err) {
+              con.release()
+              return res.status(500).json({ err })
+            }
+            con.release()
+            return res.json({ header: 'Congrats', message: 'Your password has been changed', stay: false })
+          })
+        })
+      })
+    })
+  })
+})
+
 module.exports = router

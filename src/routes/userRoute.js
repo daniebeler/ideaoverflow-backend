@@ -82,8 +82,7 @@ router.post('/changedata', async (req, res) => {
   if (/^(http:\/\/)/.test(req.body.website)) {
     req.body.website = req.body.website.slice(7)
     console.log(req.body.website)
-  }
-  else if (/^(https:\/\/)/.test(req.body.website)) {
+  } else if (/^(https:\/\/)/.test(req.body.website)) {
     req.body.website = req.body.website.slice(8)
     console.log(req.body.website)
   }
