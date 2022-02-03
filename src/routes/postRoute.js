@@ -72,6 +72,12 @@ router.post('/posts', (req, res) => {
   if (req.body.savedByUsername) {
     savedFilter = 'INNER JOIN user_saves_post s ON s.post_id = p.id WHERE s.user_id = ' + req.body.currentUserId
     order = 'ORDER BY s.savedAt DESC'
+  } else if (req.body.sortingCriteria === 'newest') {
+    order = 'ORDER BY p.creation_date DESC'
+  } else if (req.body.sortingCriteria === 'likes') {
+    order = 'ORDER BY upvotes DESC'
+  } else if (req.body.sortingCriteria === 'oldest') {
+    order = 'ORDER BY p.creation_date ASC'
   }
 
   database.getConnection((_err, con) => {
