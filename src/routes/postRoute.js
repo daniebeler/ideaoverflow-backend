@@ -66,7 +66,7 @@ router.post('/posts', (req, res) => {
   }
 
   if (req.body.searchTerm) {
-    searchFilter = 'WHERE u.username LIKE "' + req.body.searchTerm + '"'
+    searchFilter = 'WHERE u.username LIKE "%' + req.body.searchTerm + '%"'
   }
 
   if (req.body.savedByUsername) {
