@@ -68,7 +68,7 @@ router.post('/checkfollow', async (req, res) => {
       if (err) {
         return res.status(500).json({ err })
       } else {
-        return res.json({ user }).send()
+        return res.json({ following: user[0].following }).send()
       }
     })
   })
