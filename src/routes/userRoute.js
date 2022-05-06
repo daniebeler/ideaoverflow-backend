@@ -6,7 +6,7 @@ const database = require('../database')
 router.get('/databyuserid/:userid', (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
-            SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.bio, u.creationdate, u.private, (select count(followee_id) from follower where followee_id = u.id) as followers, (select count(follower_id) from follower where follower_id = u.id) as following, u.country, u.state, u.website, u.github, u.dribbble, u.linkedin, u.twitter, u.instagram, u.profileimage
+            SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.bio, u.creationdate, u.private, (select count(followee_id) from follower where followee_id = u.id) as followers, (select count(follower_id) from follower where follower_id = u.id) as following, u.country, u.state, u.website, u.github, u.dribbble, u.linkedin, u.twitter, u.instagram, u.profileimage, u.color
             FROM user u 
             WHERE u.id = ${con.escape(req.params.userid)}
             `, (err, user) => {
@@ -103,7 +103,8 @@ router.post('/changedata', async (req, res) => {
     github = ${con.escape(req.body.github)},
     linkedin = ${con.escape(req.body.linkedin)},
     website = ${con.escape(req.body.website)},
-    profileimage = ${con.escape(req.body.profilepicture)}
+    profileimage = ${con.escape(req.body.profilepicture)},
+    color = ${con.escape(req.body.color)}
     WHERE id = ${con.escape(req.body.id)}`, (err) => {
       con.release()
       if (err) {
