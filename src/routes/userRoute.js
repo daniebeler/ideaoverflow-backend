@@ -27,7 +27,7 @@ router.get('/databyuserid/:userid', (req, res) => {
 router.get('/databyusername/:username', (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
-            SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.bio, u.creationdate, u.private, (select count(followee_id) from follower where followee_id = u.id) as followers, (select count(follower_id) from follower where follower_id = u.id) as following, u.country, u.state, u.website, u.dribbble, u.linkedin, u.github, u.twitter, u.instagram, u.profileimage
+            SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.bio, u.creationdate, u.private, (select count(followee_id) from follower where followee_id = u.id) as followers, (select count(follower_id) from follower where follower_id = u.id) as following, u.country, u.state, u.website, u.dribbble, u.linkedin, u.github, u.twitter, u.instagram, u.profileimage, u.color
             FROM user u 
             WHERE u.username = ${con.escape(req.params.username)}
             `, (err, user) => {

@@ -82,7 +82,7 @@ router.post('/posts', (req, res) => {
 
   database.getConnection((_err, con) => {
     con.query(`
-      SELECT p.*, u.id as ownerid, u.profileimage, u.username, ${userIsLoggedInSelect} (SELECT count(post_id) FROM vote vvv WHERE vvv.post_id = p.id AND vvv.value = 1) as upvotes, (SELECT count(post_id) FROM vote vvv WHERE vvv.post_id = p.id AND vvv.value = -1) as downvotes
+      SELECT p.*, u.id as ownerid, u.profileimage, u.color, u.username, ${userIsLoggedInSelect} (SELECT count(post_id) FROM vote vvv WHERE vvv.post_id = p.id AND vvv.value = 1) as upvotes, (SELECT count(post_id) FROM vote vvv WHERE vvv.post_id = p.id AND vvv.value = -1) as downvotes
       FROM post p
       INNER JOIN user u ON p.fk_owner_user_id = u.id
       ${userIsLoggedInJoin}
