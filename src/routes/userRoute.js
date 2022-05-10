@@ -180,4 +180,32 @@ router.get('/numberoftotalusers', (_req, res) => {
   })
 })
 
+router.get('/numberofideasbyuser/:id', (req, res) => {
+  console.log(req.params.id)
+  database.getConnection((_err, con) => {
+    con.query(`SELECT count(id) as numberofideas FROM post where fk_owner_user_id = ${con.escape(req.params.id)}`, (err, result) => {
+      con.release()
+      if (err) {
+        return res.status(500).json({ err })
+      } else {
+        return res.send(result[0])
+      }
+    })
+  })
+})
+
+router.get('/numberofprojectsbyuser/:id', (req, res) => {
+  console.log(req.params.id)
+  database.getConnection((_err, con) => {
+    con.query(`SELECT count(id) as numberofprojects FROM project where fk_user_id = ${con.escape(req.params.id)}`, (err, result) => {
+      con.release()
+      if (err) {
+        return res.status(500).json({ err })
+      } else {
+        return res.send(result[0])
+      }
+    })
+  })
+})
+
 module.exports = router

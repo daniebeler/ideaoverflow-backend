@@ -20,6 +20,9 @@ app.use('/post', postRoute)
 const followerRoute = require('./routes/followerRoute')
 app.use('/follower', followerRoute)
 
+const projectRoute = require('./routes/projectRoute')
+app.use('/project', projectRoute)
+
 try {
   const options = {
     key: fs.readFileSync('/etc/letsencrypt/live/api.ideaoverflow.xyz/privkey.pem'),
