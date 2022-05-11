@@ -6,7 +6,7 @@ const database = require('../database')
 router.get('/databyuserid/:userid', (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
-            SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.bio, u.creationdate, u.private, (select count(followee_id) from follower where followee_id = u.id) as followers, (select count(follower_id) from follower where follower_id = u.id) as following, u.country, u.state, u.website, u.github, u.dribbble, u.linkedin, u.twitter, u.instagram, u.profileimage, u.color
+            SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.bio, u.creationdate, (select count(followee_id) from follower where followee_id = u.id) as followers, (select count(follower_id) from follower where follower_id = u.id) as following, u.country, u.state, u.website, u.github, u.dribbble, u.linkedin, u.twitter, u.instagram, u.profileimage, u.color
             FROM user u 
             WHERE u.id = ${con.escape(req.params.userid)}
             `, (err, user) => {
@@ -27,7 +27,7 @@ router.get('/databyuserid/:userid', (req, res) => {
 router.get('/databyusername/:username', (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
-            SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.bio, u.creationdate, u.private, (select count(followee_id) from follower where followee_id = u.id) as followers, (select count(follower_id) from follower where follower_id = u.id) as following, u.country, u.state, u.website, u.dribbble, u.linkedin, u.github, u.twitter, u.instagram, u.profileimage, u.color
+            SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.bio, u.creationdate, (select count(followee_id) from follower where followee_id = u.id) as followers, (select count(follower_id) from follower where follower_id = u.id) as following, u.country, u.state, u.website, u.dribbble, u.linkedin, u.github, u.twitter, u.instagram, u.profileimage, u.color
             FROM user u 
             WHERE u.username = ${con.escape(req.params.username)}
             `, (err, user) => {
@@ -93,7 +93,6 @@ router.post('/changedata', async (req, res) => {
     SET 
     firstname = ${con.escape(req.body.firstname)},
     lastname = ${con.escape(req.body.lastname)},
-    private = ${con.escape(req.body.private)},
     country = ${con.escape(req.body.country)},
     state = ${con.escape(req.body.state)},
     bio = ${con.escape(req.body.bio)},
