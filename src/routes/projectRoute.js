@@ -5,10 +5,11 @@ const database = require('../database')
 router.get('/byid/:id', (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
-              SELECT *
-              FROM project p 
-              WHERE p.id = ${con.escape(req.params.id)}
-              `, (err, user) => {
+      SELECT p.*, u.profileimage, u.username
+      FROM project p 
+      INNER JOIN user u ON p.fk_user_id = u.id
+      WHERE p.id = ${con.escape(req.params.id)}
+     `, (err, user) => {
       con.release()
       if (err) {
         return res.status(500).json({ err })
@@ -27,12 +28,14 @@ router.post('/create', async (req, res) => {
   console.log(req.body)
   database.getConnection((_err, con) => {
     con.query(`
-    INSERT INTO project (fk_user_id, title, short_description, logo)
+    INSERT INTO project (fk_user_id, title, short_description, logo, body, website)
     VALUES (
       ${con.escape(req.body.owner_id)},
       ${con.escape(req.body.title)},
       ${con.escape(req.body.short_description)},
-      ${con.escape(req.body.logo)})
+      ${con.escape(req.body.logo)},
+      ${con.escape(req.body.body)},
+      ${con.escape(req.body.website)})
     `, (err) => {
       con.release()
       if (err) {
@@ -62,7 +65,7 @@ router.post('/projects', (req, res) => {
 
   database.getConnection((_err, con) => {
     con.query(`
-      SELECT p.*, u.id as ownerid, u.profileimage, u.color, u.username
+      SELECT p.*, u.profileimage, u.color, u.username
       FROM project p
       INNER JOIN user u ON p.fk_user_id = u.id
       ${usernameFilter}
