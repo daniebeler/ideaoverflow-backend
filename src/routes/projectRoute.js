@@ -28,20 +28,52 @@ router.post('/create', async (req, res) => {
   console.log(req.body)
   database.getConnection((_err, con) => {
     con.query(`
-    INSERT INTO project (fk_user_id, title, short_description, logo, body, website)
+    INSERT INTO project (fk_user_id, title, short_description, logo, body, website, release_date)
     VALUES (
       ${con.escape(req.body.owner_id)},
       ${con.escape(req.body.title)},
       ${con.escape(req.body.short_description)},
       ${con.escape(req.body.logo)},
       ${con.escape(req.body.body)},
-      ${con.escape(req.body.website)})
+      ${con.escape(req.body.website)},
+      ${con.escape(req.body.release_date)})
     `, (err) => {
       con.release()
       if (err) {
         return res.status(500).json({ err })
       } else {
         return res.status(200).json({ status: 200, header: 'Nice!', message: 'Your post is now online' })
+      }
+    })
+  })
+})
+
+router.post('/update', async (req, res) => {
+  if (/^(http:\/\/)/.test(req.body.website)) {
+    req.body.website = req.body.website.slice(7)
+    console.log(req.body.website)
+  } else if (/^(https:\/\/)/.test(req.body.website)) {
+    req.body.website = req.body.website.slice(8)
+    console.log(req.body.website)
+  }
+
+  database.getConnection((_err, con) => {
+    con.query(`
+    UPDATE project
+    SET 
+    title = ${con.escape(req.body.title)},
+    body = ${con.escape(req.body.body)},
+    start_date = ${con.escape(req.body.start_date)},
+    release_date = ${con.escape(req.body.release_date)},
+    logo = ${con.escape(req.body.logo)},
+    short_description = ${con.escape(req.body.short_description)},
+    website = ${con.escape(req.body.website)}
+    WHERE id = ${con.escape(req.body.id)}`, (err) => {
+      con.release()
+      if (err) {
+        return res.status(500).json({ err })
+      } else {
+        return res.json({ status: 200, header: 'Juhuu', message: 'Stonks' }).send()
       }
     })
   })
