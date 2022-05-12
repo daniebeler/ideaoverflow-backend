@@ -2,6 +2,28 @@ const express = require('express')
 const router = express.Router()
 const database = require('../database')
 
+router.get('/byid/:id', (req, res) => {
+  database.getConnection((_err, con) => {
+    con.query(`
+      SELECT p.*, u.profileimage, u.username
+      FROM post p 
+      INNER JOIN user u ON p.fk_owner_user_id = u.id
+      WHERE p.id = ${con.escape(req.params.id)}
+     `, (err, user) => {
+      con.release()
+      if (err) {
+        return res.status(500).json({ err })
+      } else {
+        if (user[0]) {
+          return res.send(user[0])
+        } else {
+          return res.send({ status: 204 })
+        }
+      }
+    })
+  })
+})
+
 router.post('/create', async (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
