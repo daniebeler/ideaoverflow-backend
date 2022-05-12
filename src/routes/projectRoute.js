@@ -27,8 +27,12 @@ router.post('/create', async (req, res) => {
   console.log(req.body)
   database.getConnection((_err, con) => {
     con.query(`
-    INSERT INTO project (fk_user_id, title, short_description)
-    VALUES (${con.escape(req.body.owner_id)}, ${con.escape(req.body.title)}, ${con.escape(req.body.short_description)})
+    INSERT INTO project (fk_user_id, title, short_description, logo)
+    VALUES (
+      ${con.escape(req.body.owner_id)},
+      ${con.escape(req.body.title)},
+      ${con.escape(req.body.short_description)},
+      ${con.escape(req.body.logo)})
     `, (err) => {
       con.release()
       if (err) {
