@@ -34,7 +34,7 @@ router.post('/create', async (req, res) => {
       if (err) {
         return res.status(500).json({ err })
       } else {
-        return res.status(200).json({ status: 200, header: 'Nice!', message: 'Your post is now online' })
+        return res.status(200).json({ status: 200, header: 'Nice!', message: 'Your post is now online!' })
       }
     })
   })

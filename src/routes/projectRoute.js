@@ -42,7 +42,7 @@ router.post('/create', async (req, res) => {
       if (err) {
         return res.status(500).json({ err })
       } else {
-        return res.status(200).json({ status: 200, header: 'Nice!', message: 'Your post is now online' })
+        return res.status(200).json({ status: 200, header: 'Nice!', message: 'Your project is now online!' })
       }
     })
   })
@@ -73,7 +73,7 @@ router.post('/update', async (req, res) => {
       if (err) {
         return res.status(500).json({ err })
       } else {
-        return res.json({ status: 200, header: 'Juhuu', message: 'Stonks' }).send()
+        return res.json({ status: 200, header: 'Nice!', message: 'Your project has been updated!' }).send()
       }
     })
   })
@@ -81,18 +81,16 @@ router.post('/update', async (req, res) => {
 
 router.post('/projects', (req, res) => {
   let usernameFilter = ''
-  let order = 'ORDER BY p.creation_date DESC'
+  let order = 'ORDER BY coalesce(p.release_date, p.creation_date) DESC'
 
   if (req.body.username) {
     usernameFilter = 'WHERE u.username = "' + req.body.username + '"'
   }
 
   if (req.body.sortingCriteria === 'newest') {
-    order = 'ORDER BY p.creation_date DESC'
-  } else if (req.body.sortingCriteria === 'likes') {
-    order = 'ORDER BY upvotes DESC'
+    order = 'ORDER BY coalesce(p.release_date, p.creation_date) DESC'
   } else if (req.body.sortingCriteria === 'oldest') {
-    order = 'ORDER BY p.creation_date ASC'
+    order = 'ORDER BY coalesce(p.release_date, p.creation_date) ASC'
   }
 
   database.getConnection((_err, con) => {
