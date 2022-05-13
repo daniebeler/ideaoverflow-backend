@@ -113,4 +113,17 @@ router.post('/projects', (req, res) => {
   })
 })
 
+router.get('/numberoftotalprojects', (req, res) => {
+  database.getConnection((_err, con) => {
+    con.query('SELECT count(id) as numberoftotalprojects FROM project', (err, result) => {
+      con.release()
+      if (err) {
+        return res.status(500).json({ err })
+      } else {
+        return res.send(result[0])
+      }
+    })
+  })
+})
+
 module.exports = router
