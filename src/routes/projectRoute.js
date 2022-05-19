@@ -37,12 +37,39 @@ router.post('/create', async (req, res) => {
       ${con.escape(req.body.body)},
       ${con.escape(req.body.website)},
       ${con.escape(req.body.release_date)})
-    `, (err) => {
-      con.release()
+    `, (err, fief) => {
       if (err) {
+        con.release()
+        console.log(err)
         return res.status(500).json({ err })
       } else {
-        return res.status(200).json({ status: 200, header: 'Nice!', message: 'Your project is now online!' })
+        if (req.body.screenshots.length) {
+          console.log('exists')
+
+          const ins = []
+          req.body.screenshots.forEach((screenshot, index) => {
+            ins.push([fief.insertId, screenshot, index])
+          })
+
+          console.log(ins)
+
+          con.query(`
+        INSERT INTO screenshot (fk_project_id, url, sorting_index)
+        VALUES ?
+          
+        `, [ins], (err, fief) => {
+            con.release()
+            if (err) {
+              console.log(err)
+              return res.status(500).json({ err })
+            } else {
+              console.log(fief)
+              return res.status(200).json({ status: 200, header: 'Nice!', message: 'Your project is now online!' })
+            }
+          })
+        } else {
+          return res.status(200).json({ status: 200, header: 'Nice!', message: 'Your project is now online!' })
+        }
       }
     })
   })
