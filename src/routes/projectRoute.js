@@ -10,15 +10,34 @@ router.get('/byid/:id', (req, res) => {
       INNER JOIN user u ON p.fk_user_id = u.id
       WHERE p.id = ${con.escape(req.params.id)}
      `, (err, user) => {
-      con.release()
       if (err) {
+        con.release()
         return res.status(500).json({ err })
       } else {
-        if (user[0]) {
-          return res.send(user[0])
-        } else {
-          return res.send({ status: 204 })
-        }
+        con.query(`
+      SELECT s.id, s.url
+      FROM project p 
+      left join screenshot s on p.id = s.fk_project_id
+      WHERE p.id = ${user[0].id}
+     `, (err, screenshots) => {
+          con.release()
+          if (err) {
+            return res.status(500).json({ err })
+          } else {
+            if (user[0]) {
+              const completeResult = user[0]
+              completeResult.screenshots = []
+              screenshots.forEach(element => {
+                if (element.url) {
+                  completeResult.screenshots.push(element.url)
+                }
+              })
+              return res.send(completeResult)
+            } else {
+              return res.send({ status: 204 })
+            }
+          }
+        })
       }
     })
   })
