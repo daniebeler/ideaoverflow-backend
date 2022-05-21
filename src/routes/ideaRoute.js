@@ -34,7 +34,7 @@ router.post('/create', async (req, res) => {
       if (err) {
         return res.status(500).json({ err })
       } else {
-        return res.status(200).json({ status: 200, header: 'Nice!', message: 'Your post is now online!' })
+        return res.status(200).json({ status: 200, header: 'Nice!', message: 'Your idea is now online!' })
       }
     })
   })
@@ -51,13 +51,13 @@ router.post('/update', async (req, res) => {
       if (err) {
         return res.status(500).json({ err })
       } else {
-        return res.status(200).json({ status: 200, header: 'Nice!', message: 'Your post has been updated!' })
+        return res.status(200).json({ status: 200, header: 'Nice!', message: 'Your idea has been updated!' })
       }
     })
   })
 })
 
-router.get('/numberoftotalposts', (req, res) => {
+router.get('/numberoftotalideas', (req, res) => {
   database.getConnection((_err, con) => {
     con.query('SELECT count(id) as numberoftotalposts FROM post', (err, result) => {
       con.release()
@@ -70,7 +70,7 @@ router.get('/numberoftotalposts', (req, res) => {
   })
 })
 
-router.post('/posts', (req, res) => {
+router.post('/ideas', (req, res) => {
   let userIsLoggedInSelect = ''
   let userIsLoggedInJoin = ''
   let usernameFilter = ''
@@ -129,7 +129,7 @@ router.post('/vote', (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
       INSERT INTO vote (user_id, post_id, value)
-      VALUES(${req.body.userId}, ${req.body.postId}, ${req.body.voteValue})
+      VALUES(${req.body.userId}, ${req.body.ideaId}, ${req.body.voteValue})
       ON DUPLICATE KEY UPDATE value = ${req.body.voteValue}
       `, (err, result) => {
       con.release()
@@ -146,7 +146,7 @@ router.post('/save', (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
       INSERT IGNORE INTO user_saves_post (user_id, post_id)
-      VALUES(${req.body.userId}, ${req.body.postId})
+      VALUES(${req.body.userId}, ${req.body.ideaId})
       `, (err, result) => {
       con.release()
       if (err) {
@@ -161,7 +161,7 @@ router.post('/save', (req, res) => {
 router.post('/unsave', (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
-      DELETE FROM user_saves_post WHERE user_id = ${req.body.userId} AND post_id = ${req.body.postId}
+      DELETE FROM user_saves_post WHERE user_id = ${req.body.userId} AND post_id = ${req.body.ideaId}
       `, (err, result) => {
       con.release()
       if (err) {
