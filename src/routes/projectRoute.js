@@ -76,18 +76,17 @@ router.post('/create', async (req, res) => {
         INSERT INTO screenshot (fk_project_id, url, sorting_index)
         VALUES ?
           
-        `, [ins], (err, fief) => {
+        `, [ins], (err) => {
             con.release()
             if (err) {
               console.log(err)
               return res.status(500).json({ err })
             } else {
-              console.log(fief)
-              return res.status(200).json({ status: 200, header: 'Nice!', message: 'Your project is now online!' })
+              return res.status(200).json({ status: 200, header: 'Nice!', message: 'Your project is now online!', id: fief.insertId })
             }
           })
         } else {
-          return res.status(200).json({ status: 200, header: 'Nice!', message: 'Your project is now online!' })
+          return res.status(200).json({ status: 200, header: 'Nice!', message: 'Your project is now online!', id: fief.insertId })
         }
       }
     })
@@ -119,7 +118,7 @@ router.post('/update', async (req, res) => {
       if (err) {
         return res.status(500).json({ err })
       } else {
-        return res.json({ status: 200, header: 'Nice!', message: 'Your project has been updated!' }).send()
+        return res.json({ status: 200, header: 'Nice!', message: 'Your project has been updated!', id: -1 }).send()
       }
     })
   })
