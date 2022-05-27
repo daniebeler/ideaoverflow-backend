@@ -204,4 +204,8 @@ router.get('/numberofprojectsbyuser/:id', (req, res) => {
   })
 })
 
+router.get('/test', (req, res) => {
+  return res.status(200).json({ fief: 'foof' })
+})
+
 module.exports = router
