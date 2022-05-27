@@ -45,7 +45,6 @@ router.get('/byid/:id', (req, res) => {
 })
 
 router.post('/create', passport.authenticate('userAuth', { session: false }), async (req, res) => {
-  console.log(req.body)
   database.getConnection((_err, con) => {
     con.query(`
     INSERT INTO project (fk_user_id, title, short_description, logo, body, website, release_date)
@@ -64,14 +63,10 @@ router.post('/create', passport.authenticate('userAuth', { session: false }), as
         return res.status(500).json({ err })
       } else {
         if (req.body.screenshots.length) {
-          console.log('exists')
-
           const ins = []
           req.body.screenshots.forEach((screenshot, index) => {
             ins.push([fief.insertId, screenshot, index])
           })
-
-          console.log(ins)
 
           con.query(`
         INSERT INTO screenshot (fk_project_id, url, sorting_index)
@@ -97,10 +92,8 @@ router.post('/create', passport.authenticate('userAuth', { session: false }), as
 router.post('/update', passport.authenticate('userAuth', { session: false }), async (req, res) => {
   if (/^(http:\/\/)/.test(req.body.website)) {
     req.body.website = req.body.website.slice(7)
-    console.log(req.body.website)
   } else if (/^(https:\/\/)/.test(req.body.website)) {
     req.body.website = req.body.website.slice(8)
-    console.log(req.body.website)
   }
 
   database.getConnection((_err, con) => {

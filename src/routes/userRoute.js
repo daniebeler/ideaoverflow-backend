@@ -82,10 +82,8 @@ router.get('/usersbysearchterm/:searchterm', (req, res) => {
 router.post('/changedata', passport.authenticate('userAuth', { session: false }), async (req, res) => {
   if (/^(http:\/\/)/.test(req.body.website)) {
     req.body.website = req.body.website.slice(7)
-    console.log(req.body.website)
   } else if (/^(https:\/\/)/.test(req.body.website)) {
     req.body.website = req.body.website.slice(8)
-    console.log(req.body.website)
   }
 
   database.getConnection((_err, con) => {
@@ -181,7 +179,6 @@ router.get('/numberoftotalusers', (_req, res) => {
 })
 
 router.get('/numberofideasbyuser/:id', (req, res) => {
-  console.log(req.params.id)
   database.getConnection((_err, con) => {
     con.query(`SELECT count(id) as numberofideas FROM post where fk_owner_user_id = ${con.escape(req.params.id)}`, (err, result) => {
       con.release()
@@ -195,7 +192,6 @@ router.get('/numberofideasbyuser/:id', (req, res) => {
 })
 
 router.get('/numberofprojectsbyuser/:id', (req, res) => {
-  console.log(req.params.id)
   database.getConnection((_err, con) => {
     con.query(`SELECT count(id) as numberofprojects FROM project where fk_user_id = ${con.escape(req.params.id)}`, (err, result) => {
       con.release()

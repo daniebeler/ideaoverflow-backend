@@ -31,10 +31,8 @@ function sendMail(to, subject, text) {
 
   transporter.sendMail(mailOptions, function (error, info) {
     if (error) {
-      console.log('Email konnte nicht gesendet werden:')
       console.log(error)
     } else {
-      console.log('Mail was sent.')
       console.log(info)
     }
   })
@@ -182,7 +180,6 @@ router.post('/resetpassword', async (req, res) => {
       return res.status(500).json(err)
     }
     const code = '0' + Math.random().toString(36).substr(2)
-    console.log('Code generated: ' + code)
     con.query('UPDATE user SET verified = 2, verificationcode = ? WHERE email = ?', [code, req.body.email], (err, result) => {
       if (err) {
         con.release()
@@ -191,7 +188,6 @@ router.post('/resetpassword', async (req, res) => {
         con.release()
         return res.status(200).json({ header: 'Fehler', message: 'Die E-Mail wurde nicht gefunden' })
       }
-      console.log(result)
       sendMail(req.body.email,
         'Reset password',
         'Open the following link to reset your password: https://ideaoverflow.xyz/resetpassword/' + code)
@@ -224,7 +220,6 @@ router.post('/setpassword', async (req, res) => {
     if (err) {
       return res.status(500).json(err)
     }
-    console.log('connected')
     if (!req.body.pw1 || !req.body.pw2) {
       con.release()
       return res.json({ header: 'Error', message: 'Informationen unvollständig!', stay: true })
