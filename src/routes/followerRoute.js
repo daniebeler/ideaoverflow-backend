@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const database = require('../database')
+const passport = require('passport')
 
 router.get('/followees/:id', (req, res) => {
   database.getConnection((_err, con) => {
@@ -24,7 +25,7 @@ router.get('/followees/:id', (req, res) => {
   })
 })
 
-router.post('/follow', async (req, res) => {
+router.post('/follow', passport.authenticate('userAuth', { session: false }), async (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
     INSERT INTO follower (follower_id, followee_id)
@@ -40,7 +41,7 @@ router.post('/follow', async (req, res) => {
   })
 })
 
-router.post('/unfollow', async (req, res) => {
+router.post('/unfollow', passport.authenticate('userAuth', { session: false }), async (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
       DELETE FROM follower

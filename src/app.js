@@ -1,12 +1,16 @@
 const express = require('express')
 const app = express()
 const cors = require('cors')
-
 const https = require('https')
 const fs = require('fs')
+const passport = require('passport')
 
 app.use(cors())
 app.use(express.json())
+app.use(passport.initialize())
+
+const userAuth = require('./middleware/userAuth')
+passport.use('userAuth', userAuth)
 
 const registrationRoute = require('./routes/registrationRoute')
 app.use('/registration', registrationRoute)

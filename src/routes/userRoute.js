@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const bcrypt = require('bcrypt')
 const database = require('../database')
+const passport = require('passport')
 
 router.get('/databyuserid/:userid', (req, res) => {
   database.getConnection((_err, con) => {
@@ -78,7 +79,7 @@ router.get('/usersbysearchterm/:searchterm', (req, res) => {
   })
 })
 
-router.post('/changedata', async (req, res) => {
+router.post('/changedata', passport.authenticate('userAuth', { session: false }), async (req, res) => {
   if (/^(http:\/\/)/.test(req.body.website)) {
     req.body.website = req.body.website.slice(7)
     console.log(req.body.website)
@@ -115,7 +116,7 @@ router.post('/changedata', async (req, res) => {
   })
 })
 
-router.post('/changepw', async (req, res) => {
+router.post('/changepw', passport.authenticate('userAuth', { session: false }), async (req, res) => {
   database.getConnection((_err, con) => {
     const pwStrength = /^(?=.*[A-Za-z])(?=.*\d)[\S]{6,}$/ // mindestens 6 Stellen && eine Zahl && ein Buchstabe
 
@@ -147,7 +148,7 @@ router.post('/changepw', async (req, res) => {
         }
         if (isMatch) {
           bcrypt.genSalt(512, (_err, salt) => {
-            bcrypt.hash(req.body.new, salt, (_err, enc) => {
+            bcrypt.hash(req.body.newPassword1, salt, (_err, enc) => {
               con.query(`UPDATE user SET password = ${con.escape(enc)} WHERE id = ${con.escape(req.body.id)}`, (err) => {
                 con.release()
                 if (err) {

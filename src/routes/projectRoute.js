@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const database = require('../database')
+const passport = require('passport')
 
 router.get('/byid/:id', (req, res) => {
   database.getConnection((_err, con) => {
@@ -43,7 +44,7 @@ router.get('/byid/:id', (req, res) => {
   })
 })
 
-router.post('/create', async (req, res) => {
+router.post('/create', passport.authenticate('userAuth', { session: false }), async (req, res) => {
   console.log(req.body)
   database.getConnection((_err, con) => {
     con.query(`
@@ -93,7 +94,7 @@ router.post('/create', async (req, res) => {
   })
 })
 
-router.post('/update', async (req, res) => {
+router.post('/update', passport.authenticate('userAuth', { session: false }), async (req, res) => {
   if (/^(http:\/\/)/.test(req.body.website)) {
     req.body.website = req.body.website.slice(7)
     console.log(req.body.website)

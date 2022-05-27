@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const database = require('../database')
+const passport = require('passport')
 
 router.get('/byid/:id', (req, res) => {
   database.getConnection((_err, con) => {
@@ -24,7 +25,7 @@ router.get('/byid/:id', (req, res) => {
   })
 })
 
-router.post('/create', async (req, res) => {
+router.post('/create', passport.authenticate('userAuth', { session: false }), async (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
     INSERT INTO post (fk_owner_user_id, title, body)
@@ -40,7 +41,7 @@ router.post('/create', async (req, res) => {
   })
 })
 
-router.post('/update', async (req, res) => {
+router.post('/update', passport.authenticate('userAuth', { session: false }), async (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
     UPDATE post
@@ -59,7 +60,7 @@ router.post('/update', async (req, res) => {
 
 router.get('/numberoftotalideas', (req, res) => {
   database.getConnection((_err, con) => {
-    con.query('SELECT count(id) as numberoftotalposts FROM post', (err, result) => {
+    con.query('SELECT count(id) as numberoftotalideas FROM post', (err, result) => {
       con.release()
       if (err) {
         return res.status(500).json({ err })
@@ -125,7 +126,7 @@ router.post('/ideas', (req, res) => {
   })
 })
 
-router.post('/vote', (req, res) => {
+router.post('/vote', passport.authenticate('userAuth', { session: false }), (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
       INSERT INTO vote (user_id, post_id, value)
@@ -142,7 +143,7 @@ router.post('/vote', (req, res) => {
   })
 })
 
-router.post('/save', (req, res) => {
+router.post('/save', passport.authenticate('userAuth', { session: false }), (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
       INSERT IGNORE INTO user_saves_post (user_id, post_id)
@@ -158,7 +159,7 @@ router.post('/save', (req, res) => {
   })
 })
 
-router.post('/unsave', (req, res) => {
+router.post('/unsave', passport.authenticate('userAuth', { session: false }), (req, res) => {
   database.getConnection((_err, con) => {
     con.query(`
       DELETE FROM user_saves_post WHERE user_id = ${req.body.userId} AND post_id = ${req.body.ideaId}
