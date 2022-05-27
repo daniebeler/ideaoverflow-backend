@@ -174,4 +174,25 @@ router.post('/unsave', passport.authenticate('userAuth', { session: false }), (r
   })
 })
 
+router.get('/checkifideabelongstouser/:postid', passport.authenticate('userAuth', { session: false }), (req, res) => {
+  database.getConnection((_err, con) => {
+    con.query(`
+      SELECT *
+      FROM post
+      WHERE id = ${con.escape(req.params.postid)}
+     `, (err, post) => {
+      con.release()
+      if (err) {
+        return res.status(500).json({ err })
+      } else {
+        if (post[0] && post[0].fk_owner_user_id === req.user.id) {
+          return res.send({ accessgranted: true })
+        } else {
+          return res.send({ accessgranted: false })
+        }
+      }
+    })
+  })
+})
+
 module.exports = router

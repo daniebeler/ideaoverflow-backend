@@ -165,4 +165,25 @@ router.get('/numberoftotalprojects', (req, res) => {
   })
 })
 
+router.get('/checkifprojectbelongstouser/:projectid', passport.authenticate('userAuth', { session: false }), (req, res) => {
+  database.getConnection((_err, con) => {
+    con.query(`
+      SELECT *
+      FROM project
+      WHERE id = ${con.escape(req.params.projectid)}
+     `, (err, post) => {
+      con.release()
+      if (err) {
+        return res.status(500).json({ err })
+      } else {
+        if (post[0] && post[0].fk_user_id === req.user?.id) {
+          return res.send({ accessgranted: true })
+        } else {
+          return res.send({ accessgranted: false })
+        }
+      }
+    })
+  })
+})
+
 module.exports = router
