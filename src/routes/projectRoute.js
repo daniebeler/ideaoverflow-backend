@@ -176,7 +176,7 @@ router.get('/checkifprojectbelongstouser/:projectid', passport.authenticate('use
       if (err) {
         return res.status(500).json({ err })
       } else {
-        if (post[0] && post[0].fk_user_id === req.user?.id) {
+        if (post[0] && post[0].fk_user_id === req.user.id) {
           return res.send({ accessgranted: true })
         } else {
           return res.send({ accessgranted: false })
