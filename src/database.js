@@ -1,12 +1,14 @@
-const mysql = require('mysql')
+const mariadb = require('mariadb/callback')
 
-const pool = mysql.createPool({
-  host: 'localhost',
+const pool = mariadb.createPool({
+  host: '127.0.0.1',
   user: 'root',
-  password: '',
+  password: 'AUT-1251',
   database: 'ideaoverflow',
   connectionLimit: 800,
-  multipleStatements: false
+  charset: 'utf8mb4',
+  collation: 'utf8mb4_general_ci',
+  supportBigNumbers: true
 })
 
 exports.getConnection = function (callback) {
