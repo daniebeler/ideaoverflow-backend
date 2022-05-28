@@ -29,13 +29,14 @@ app.use('/project', projectRoute)
 
 try {
   const options = {
-    key: fs.readFileSync('/etc/letsencrypt/live/api.ideaoverflow.xyz/privkey.pem'),
-    cert: fs.readFileSync('/etc/letsencrypt/live/api.ideaoverflow.xyz/cert.pem')
+    key: fs.readFileSync('/app/cert/privkey.pem'),
+    cert: fs.readFileSync('/app/cert/cert.pem')
   }
 
   https.createServer(options, app).listen(8080)
+  console.log('Server started using https on port 8080')
 } catch (error) {
   app.listen(6969, () => {
-    console.log('Server started')
+    console.log('Server started using http on port 6969')
   })
 }
