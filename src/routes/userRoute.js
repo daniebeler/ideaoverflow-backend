@@ -46,36 +46,23 @@ router.get('/databyusername/:username', (req, res) => {
   })
 })
 
-router.get('/users', (req, res) => {
-  database.getConnection((_err, con) => {
-    con.query(`
-    select *
-    from user
-      `, (err, user) => {
-      con.release()
-      if (err) {
-        return res.status(500).json({ err })
-      } else {
-        return res.send(user)
-      }
-    })
+router.get('/users', async (req, res) => {
+  database.dbQuery('select * from user', [], (result, err) => {
+    if (err) {
+      return res.status(500).json({ err })
+    } else {
+      return res.send(result)
+    }
   })
 })
 
 router.get('/usersbysearchterm/:searchterm', (req, res) => {
-  database.getConnection((_err, con) => {
-    con.query(`
-    select *
-    from user
-    where username = ${con.escape(req.params.searchterm)}
-      `, (err, user) => {
-      con.release()
-      if (err) {
-        return res.status(500).json({ err })
-      } else {
-        return res.send(user)
-      }
-    })
+  database.dbQuery('select * from user where username = ?', [req.params.searchterm], (result, err) => {
+    if (err) {
+      return res.status(500).json({ err })
+    } else {
+      return res.send(result)
+    }
   })
 })
 

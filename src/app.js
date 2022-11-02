@@ -1,8 +1,6 @@
 const express = require('express')
 const app = express()
 const cors = require('cors')
-const https = require('https')
-const fs = require('fs')
 const passport = require('passport')
 
 app.use(cors())
@@ -27,16 +25,6 @@ app.use('/follower', followerRoute)
 const projectRoute = require('./routes/projectRoute')
 app.use('/project', projectRoute)
 
-try {
-  const options = {
-    key: fs.readFileSync('/app/cert/privkey.pem'),
-    cert: fs.readFileSync('/app/cert/cert.pem')
-  }
-
-  https.createServer(options, app).listen(8080)
-  console.log('Server started using https on port 8080')
-} catch (error) {
-  app.listen(6969, () => {
-    console.log('Server started using http on port 6969')
-  })
-}
+app.listen(6969, () => {
+  console.log('Server started using http on port 6969')
+})
