@@ -5,7 +5,7 @@ const pool = mariadb.createPool({
   user: 'root',
   password: '',
   database: 'ideaoverflow',
-  connectionLimit: 800,
+  connectionLimit: 100,
   charset: 'utf8mb4',
   collation: 'utf8mb4_general_ci',
   supportBigNumbers: true
@@ -21,28 +21,44 @@ module.exports = {
     })
   },
 
-  dbQuery: async function (query, param, callback) {
+  dbQuery: function (query, param, callback) {
     pool.query(query, param, (err, rows, metadata) => {
       if (err) {
         callback(undefined, err)
       } else {
-        callback(rows)
+        callback(rows, undefined)
       }
     })
   },
-  dbGetSingleRow: async function (query, param) {
-    const data = await this.dbQuery(query, param)
-    return data[0]
+
+  dbGetSingleRow: function (query, param, callback) {
+    this.dbQuery(query, param, (rows, err) => {
+      if (err) {
+        callback(undefined, err)
+      } else {
+        callback(rows[0], undefined)
+      }
+    })
   },
-  dbGetSingleValue: async function (query, param, defaultValue) {
-    let data = await this.dbGetSingleRow(query, param)
-    data = data.val ?? defaultValue
-    return data
+
+  dbGetSingleValue: function (query, param, defaultValue, callback) {
+    this.dbGetSingleRow(query, param, (row, err) => {
+      if (err) {
+        callback(undefined, err)
+      } else {
+        const data = row.val ?? defaultValue
+        callback(data, undefined)
+      }
+    })
   },
-  dbInsert: async function (query, param) {
-    const con = this.getConnection()
-    const data = await con.promise().query(query, param)
-    con.end()
-    return data[0].insertId
+
+  dbInsert: function (query, param, callback) {
+    this.dbQuery(query, param, (data, err) => {
+      if (err) {
+        callback(undefined, err)
+      } else {
+        callback(data.insertId, undefined)
+      }
+    })
   }
 }

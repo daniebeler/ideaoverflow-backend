@@ -17,20 +17,21 @@
   },
   "homepage": "https://github.com/daniebeler/ideaoverflow-backend#readme",
   "dependencies": {
-    "bcrypt": "^5.0.1",
+    "@supercharge/strings": "^1.29.0",
+    "bcrypt": "^5.1.0",
     "cors": "^2.8.5",
-    "express": "^4.18.1",
+    "express": "^4.18.2",
     "jsonwebtoken": "^8.5.1",
     "mariadb": "^3.0.2",
-    "nodemailer": "^6.7.5",
+    "nodemailer": "^6.8.0",
     "passport": "^0.6.0",
     "passport-jwt": "^4.0.0"
   },
   "devDependencies": {
-    "eslint": "^8.16.0",
+    "eslint": "^8.26.0",
     "eslint-config-standard": "^17.0.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^6.0.0"
+    "eslint-plugin-promise": "^6.1.1"
   }
 }

@@ -4,71 +4,54 @@ const database = require('../database')
 const passport = require('passport')
 
 router.get('/byid/:id', (req, res) => {
-  database.getConnection((_err, con) => {
-    con.query(`
-      SELECT p.*, u.profileimage, u.username
-      FROM post p 
-      INNER JOIN user u ON p.fk_owner_user_id = u.id
-      WHERE p.id = ${con.escape(req.params.id)}
-     `, (err, user) => {
-      con.release()
+  database.dbGetSingleRow('SELECT p.*, u.profileimage, u.username FROM post p INNER JOIN user u ON p.fk_owner_user_id = u.id WHERE p.id = ?',
+    [req.params.id],
+    (result, err) => {
       if (err) {
         return res.status(500).json({ err })
       } else {
-        if (user[0]) {
-          return res.send(user[0])
+        if (result) {
+          return res.send(result)
         } else {
           return res.send({ status: 204 })
         }
       }
     })
-  })
 })
 
 router.post('/create', passport.authenticate('userAuth', { session: false }), async (req, res) => {
-  database.getConnection((_err, con) => {
-    con.query(`
-    INSERT INTO post (fk_owner_user_id, title, body)
-    VALUES (${con.escape(req.body.userID)}, ${con.escape(req.body.header)}, ${con.escape(req.body.body)})
-    `, (err) => {
-      con.release()
+  database.dbInsert('INSERT INTO post (fk_owner_user_id, title, body) VALUES (?, ?, ?)',
+    [req.body.userID, req.body.header, req.body.body],
+    (result, err) => {
       if (err) {
         return res.status(500).json({ err })
       } else {
-        return res.status(200).json({ status: 200, header: 'Nice!', message: 'Your idea is now online!' })
+        return res.send({ status: 200, header: 'Nice!', message: 'Your idea is now online!' })
       }
     })
-  })
 })
 
 router.post('/update', passport.authenticate('userAuth', { session: false }), async (req, res) => {
-  database.getConnection((_err, con) => {
-    con.query(`
-    UPDATE post
-    SET title = ${con.escape(req.body.title)}, body = ${con.escape(req.body.body)}
-    WHERE id = ${con.escape(req.body.postId)}
-    `, (err) => {
-      con.release()
+  database.dbQuery('UPDATE post SET title = ?, body = ? WHERE id = ?',
+    [req.body.title, req.body.body, req.body.postId],
+    (result, err) => {
       if (err) {
         return res.status(500).json({ err })
       } else {
-        return res.status(200).json({ status: 200, header: 'Nice!', message: 'Your idea has been updated!' })
+        return res.send({ status: 200, header: 'Nice!', message: 'Your idea has been updated!' })
       }
     })
-  })
 })
 
 router.get('/numberoftotalideas', (req, res) => {
-  database.getConnection((_err, con) => {
-    con.query('SELECT count(id) as numberoftotalideas FROM post', (err, result) => {
-      con.release()
+  database.dbGetSingleValue(
+    'SELECT count(id) as val FROM post', [], 0, (result, err) => {
       if (err) {
-        return res.status(500).json({ err })
+        return res.send({ err })
       } else {
-        return res.send(result[0])
+        return res.send({ numberoftotalideas: result })
       }
     })
-  })
 })
 
 router.post('/ideas', (req, res) => {

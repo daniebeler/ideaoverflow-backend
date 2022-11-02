@@ -1,49 +1,15 @@
 const express = require('express')
 const router = express.Router()
-const jwt = require('jsonwebtoken')
-const mailer = require('nodemailer')
 const bcrypt = require('bcrypt')
 const database = require('../database')
-
-const pwStrength = /^(?=.*[A-Za-z])(?=.*\d)[\S]{6,}$/ // mindestens 6 Stellen && eine Zahl && ein Buchstabe
-
-function createToken(id, email, username) {
-  return jwt.sign({ id, email, username }, 'ideaoverflow420', { expiresIn: '1y' })
-}
-
-function sendMail(to, subject, text) {
-  const transporter = mailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: {
-      user: 'noreply.ideaoverflow@gmail.com',
-      pass: 'Omemomemo420'
-    }
-  })
-
-  const mailOptions = {
-    from: 'noreply.ideaoverflow@gmail.com',
-    to: to,
-    subject: subject,
-    text: text
-  }
-
-  transporter.sendMail(mailOptions, function (error, info) {
-    if (error) {
-      console.log(error)
-    } else {
-      console.log(info)
-    }
-  })
-}
+const helper = require('../helper')
 
 router.post('/register', async (req, res) => {
   database.getConnection((_err, con) => {
     if (!req.body.email || !req.body.username || !req.body.password1 || !req.body.password2) {
       con.release()
       return res.json({ header: 'Error', message: 'Empty fields!' })
-    } else if (!pwStrength.test(req.body.password1)) {
+    } else if (!helper.testPasswordStrength(req.body.password1)) {
       con.release()
       return res.json({ header: 'Error', message: 'The password must be at least 6 characters long. There must be at least one letter and one number.' })
     } else if (req.body.password1 !== req.body.password2) {
@@ -64,8 +30,7 @@ router.post('/register', async (req, res) => {
         }
       }
 
-      // generate a 13 long alphanumeric verification code
-      const code = '0' + Math.random().toString(36).substr(2)
+      const code = helper.generateRandomString()
 
       bcrypt.genSalt(512, (_err, salt) => {
         bcrypt.hash(req.body.password1, salt, (_err, enc) => {
@@ -78,7 +43,7 @@ router.post('/register', async (req, res) => {
               return res.status(500).json({ err })
             }
 
-            sendMail(req.body.email, 'Email verification', 'Open this link to enable your account: https://ideaoverflow.xyz/verify/' + code)
+            helper.sendMail(req.body.email, 'Email verification', 'Open this link to enable your account: https://ideaoverflow.xyz/verify/' + code)
             return res.json({ status: 1, header: 'Congrats!', message: 'The user has been created. Please confirm your e-mail, it may have ended up in the spam folder. After that you can log in.' })
           })
         })
@@ -119,7 +84,7 @@ router.post('/login', async (req, res) => {
                 })
               }
 
-              const usertoken = createToken(users[0].id, users[0].email, users[0].username)
+              const usertoken = helper.createJWT(users[0].id, users[0].email, users[0].username)
 
               const answer = { token: usertoken }
               return res.json(answer)
@@ -168,7 +133,7 @@ router.post('/sendverificationmailagain', async (req, res) => {
         con.release()
         return res.status(500).json({ header: 'Error', message: 'Failed to send mail!' })
       }
-      sendMail(req.body.email, 'Email verification', 'Open this link to enable your account: https://ideaoverflow.xyz/verify/' + result[0].verificationcode)
+      helper.sendMail(req.body.email, 'Email verification', 'Open this link to enable your account: https://ideaoverflow.xyz/verify/' + result[0].verificationcode)
       return res.status(200).json({ header: 'Success!', message: 'Mail sent!' })
     })
   })
@@ -179,7 +144,7 @@ router.post('/resetpassword', async (req, res) => {
     if (err) {
       return res.status(500).json(err)
     }
-    const code = '0' + Math.random().toString(36).substr(2)
+    const code = helper.generateRandomString()
     con.query('UPDATE user SET verified = 2, verificationcode = ? WHERE email = ?', [code, req.body.email], (err, result) => {
       if (err) {
         con.release()
@@ -188,7 +153,7 @@ router.post('/resetpassword', async (req, res) => {
         con.release()
         return res.status(200).json({ header: 'Fehler', message: 'Die E-Mail wurde nicht gefunden' })
       }
-      sendMail(req.body.email,
+      helper.sendMail(req.body.email,
         'Reset password',
         'Open the following link to reset your password: https://ideaoverflow.xyz/resetpassword/' + code)
       return res.status(200).json({ header: 'Nice!', message: 'Mail sent to ' + req.body.email + '!' })
@@ -197,9 +162,8 @@ router.post('/resetpassword', async (req, res) => {
 })
 
 router.get('/checkresetcode/:code', (req, res) => {
-  database.getConnection((_err, con) => {
-    con.query('SELECT * FROM user WHERE verificationcode = ?', [req.params.code], (err, result) => {
-      con.release()
+  database.dbQuery(
+    'SELECT * FROM user WHERE verificationcode = ?', [req.params.code], (result, err) => {
       if (err) {
         return res.status(500).json({ err })
       }
@@ -212,7 +176,6 @@ router.get('/checkresetcode/:code', (req, res) => {
         return res.status(200).json({ message: 'This code exists multiple times. Please contact hiebeler.daniel@gmail.com', exists: false })
       }
     })
-  })
 })
 
 router.post('/setpassword', async (req, res) => {
@@ -226,7 +189,7 @@ router.post('/setpassword', async (req, res) => {
     } else if (req.body.pw1 !== req.body.pw2) {
       con.release()
       return res.json({ header: 'Error', message: 'Passwords are not the same!', stay: true })
-    } else if (!pwStrength.test(req.body.pw1)) {
+    } else if (!helper.testPasswordStrength(req.body.pw1)) {
       con.release()
       return res.json({ header: 'Error', message: 'The password must be at least 6 characters long. There must be at least one letter and one number.', stay: true })
     }

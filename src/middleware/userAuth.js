@@ -8,15 +8,14 @@ const opts = {
 }
 
 module.exports = new JwtStrategy(opts, function (jwtPayload, done) {
-  database.getConnection((_err, con) => {
-    con.query(`SELECT * FROM user WHERE id = '${jwtPayload.id}'`, (err, user) => {
-      con.release()
-      if (err) {
-        return done(err, false)
-      }
-      if (user.length > 0) {
-        return done(null, user[0])
-      } else return done(null, false)
-    })
+  database.dbGetSingleRow('SELECT * FROM user WHERE id = ?', [jwtPayload.id], (user, err) => {
+    if (err) {
+      return done(err, false)
+    }
+    if (user) {
+      return done(null, user)
+    } else {
+      return done(null, false)
+    }
   })
 })
