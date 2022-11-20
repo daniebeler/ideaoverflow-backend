@@ -25,6 +25,6 @@ app.use('/follower', followerRoute)
 const projectRoute = require('./routes/projectRoute')
 app.use('/project', projectRoute)
 
-app.listen(6969, () => {
-  console.log('Server started using http on port 6969')
+app.listen(3003, () => {
+  console.log('Server started using http on port 3003')
 })
