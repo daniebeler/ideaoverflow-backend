@@ -1,14 +1,14 @@
 const express = require('express')
 const router = express.Router()
 const database = require('../database')
-const passport = require('passport')
+const auth = require('../middleware/userAuth')
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
 
 const use = fn => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next)
 
-router.post('/follow', passport.authenticate('userAuth', { session: false }), use(async (req, res) => {
+router.post('/follow', auth, use(async (req, res) => {
   await prisma.follower.create({
     data: {
       follower_id: req.body.followerID,
@@ -19,7 +19,7 @@ router.post('/follow', passport.authenticate('userAuth', { session: false }), us
 }
 ))
 
-router.post('/unfollow', passport.authenticate('userAuth', { session: false }), async (req, res) => {
+router.post('/unfollow', auth, async (req, res) => {
   await prisma.follower.deleteMany({
     where: {
       follower_id: req.body.followerID,

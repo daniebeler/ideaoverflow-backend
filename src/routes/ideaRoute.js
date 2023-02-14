@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 const express = require('express')
 const router = express.Router()
 const database = require('../database')
@@ -5,21 +6,101 @@ const passport = require('passport')
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
 
-router.get('/byid/:id', (req, res) => {
-  database.dbGetSingleRow('SELECT p.*, u.profileimage, u.username FROM post p INNER JOIN user u ON p.fk_owner_user_id = u.id WHERE p.id = ?',
-    [req.params.id],
-    (result, err) => {
-      if (err) {
-        return res.status(500).json({ err })
-      } else {
-        if (result) {
-          return res.send(result)
-        } else {
-          return res.send({ status: 204 })
+const use = fn => (req, res, next) =>
+  Promise.resolve(fn(req, res, next)).catch(next)
+
+router.get('/byid/:id', use(async (req, res) => {
+  const ideaId = parseInt(req.params.id)
+  const result = await prisma.post.findUnique({
+    where: {
+      id: ideaId
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          firstname: true,
+          lastname: true,
+          profileimage: true,
+          color: true
         }
       }
-    })
-})
+    }
+  })
+
+  if (result) {
+    return res.send(result)
+  } else {
+    return res.send({ status: 204 })
+  }
+}))
+
+router.get('/byusername/:username', use(async (req, res) => {
+  console.log(req.query)
+  const skip = parseInt(req.query.skip ?? 0)
+  const take = parseInt(req.query.take ?? 100)
+  const result = await prisma.post.findMany({
+    skip: skip ?? 0,
+    take: take ?? 100,
+    orderBy: {
+      creation_date: 'desc'
+    },
+    where: {
+      user: {
+        username: req.params.username
+      }
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          firstname: true,
+          lastname: true,
+          profileimage: true,
+          color: true
+        }
+      }
+    }
+  })
+
+  if (result) {
+    return res.send(result)
+  } else {
+    return res.send({ status: 204 })
+  }
+}))
+
+router.get('/all', use(async (req, res) => {
+  const skip = parseInt(req.query.skip ?? 0)
+  const take = parseInt(req.query.take ?? 100)
+  const result = await prisma.post.findMany({
+    skip: skip ?? 0,
+    take: take ?? 100,
+    orderBy: {
+      creation_date: 'desc'
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          firstname: true,
+          lastname: true,
+          profileimage: true,
+          color: true
+        }
+      }
+    }
+  })
+
+  if (result) {
+    return res.send(result)
+  } else {
+    return res.send({ status: 204 })
+  }
+}))
 
 router.post('/create', passport.authenticate('userAuth', { session: false }), async (req, res) => {
   database.dbInsert('INSERT INTO post (fk_owner_user_id, title, body) VALUES (?, ?, ?)',

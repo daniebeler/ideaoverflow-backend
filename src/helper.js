@@ -10,7 +10,7 @@ module.exports = {
   },
 
   createJWT: function (id, email, username) {
-    return jwt.sign({ id, email, username }, 'ideaoverflow420', { expiresIn: '1y' })
+    return jwt.sign({ id, email, username }, process.env.JWT_SECRET, { expiresIn: '1y' })
   },
 
   generateRandomString: function () {
