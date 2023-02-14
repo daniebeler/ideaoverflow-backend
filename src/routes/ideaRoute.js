@@ -2,6 +2,8 @@ const express = require('express')
 const router = express.Router()
 const database = require('../database')
 const passport = require('passport')
+const { PrismaClient } = require('@prisma/client')
+const prisma = new PrismaClient()
 
 router.get('/byid/:id', (req, res) => {
   database.dbGetSingleRow('SELECT p.*, u.profileimage, u.username FROM post p INNER JOIN user u ON p.fk_owner_user_id = u.id WHERE p.id = ?',
@@ -43,15 +45,9 @@ router.post('/update', passport.authenticate('userAuth', { session: false }), as
     })
 })
 
-router.get('/numberoftotalideas', (req, res) => {
-  database.dbGetSingleValue(
-    'SELECT count(id) as val FROM post', [], 0, (result, err) => {
-      if (err) {
-        return res.send({ err })
-      } else {
-        return res.send({ numberoftotalideas: result })
-      }
-    })
+router.get('/numberoftotalideas', async (req, res) => {
+  const numberoftotalideas = await prisma.post.count()
+  return res.send({ numberoftotalideas })
 })
 
 router.post('/ideas', (req, res) => {

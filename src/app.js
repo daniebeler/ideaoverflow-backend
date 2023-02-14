@@ -1,3 +1,4 @@
+const ErrorHandler = require('./middleware/errorHandler.js')
 const express = require('express')
 const app = express()
 const cors = require('cors')
@@ -24,6 +25,8 @@ app.use('/follower', followerRoute)
 
 const projectRoute = require('./routes/projectRoute')
 app.use('/project', projectRoute)
+
+app.use(ErrorHandler)
 
 app.listen(3003, () => {
   console.log('Server started using http on port 3003')

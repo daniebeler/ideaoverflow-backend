@@ -2,25 +2,31 @@ const express = require('express')
 const router = express.Router()
 const database = require('../database')
 const passport = require('passport')
+const { PrismaClient } = require('@prisma/client')
+const prisma = new PrismaClient()
 
-router.post('/follow', passport.authenticate('userAuth', { session: false }), async (req, res) => {
-  database.dbInsert('INSERT INTO follower (follower_id, followee_id) VALUES (?, ?)', [req.body.followerID, req.body.followeeID], (result, err) => {
-    if (err) {
-      return res.status(500).json({ err })
-    } else {
-      return res.send({ status: 200 })
+const use = fn => (req, res, next) =>
+  Promise.resolve(fn(req, res, next)).catch(next)
+
+router.post('/follow', passport.authenticate('userAuth', { session: false }), use(async (req, res) => {
+  await prisma.follower.create({
+    data: {
+      follower_id: req.body.followerID,
+      followee_id: req.body.followeeID
     }
   })
-})
+  return res.send({ status: 200 })
+}
+))
 
 router.post('/unfollow', passport.authenticate('userAuth', { session: false }), async (req, res) => {
-  database.dbQuery('DELETE FROM follower WHERE followee_id = ? AND follower_id = ?', [req.body.followeeID, req.body.followerID], (result, err) => {
-    if (err) {
-      return res.status(500).json({ err })
-    } else {
-      return res.send({ status: 200 })
+  await prisma.follower.deleteMany({
+    where: {
+      follower_id: req.body.followerID,
+      followee_id: req.body.followeeID
     }
   })
+  return res.send({ status: 200 })
 })
 
 router.post('/checkfollow', async (req, res) => {

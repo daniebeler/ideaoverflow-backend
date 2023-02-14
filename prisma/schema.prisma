@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model follower {
+  followee_id                     Int
+  follower_id                     Int
+  user_follower_followee_idTouser user @relation("follower_followee_idTouser", fields: [followee_id], references: [id], onUpdate: Restrict, map: "follower_FK")
+  user_follower_follower_idTouser user @relation("follower_follower_idTouser", fields: [follower_id], references: [id], onUpdate: Restrict, map: "follower_FK_1")
+
+  @@id([followee_id, follower_id])
+  @@index([follower_id], map: "follower_FK_1")
+}
+
+model post {
+  id               Int               @id @default(autoincrement())
+  fk_owner_user_id Int
+  creation_date    DateTime          @default(now()) @db.DateTime(0)
+  title            String            @db.VarChar(100)
+  body             String            @db.VarChar(10000)
+  user             user              @relation(fields: [fk_owner_user_id], references: [id], onUpdate: Restrict, map: "post_FK")
+  post_has_tag     post_has_tag[]
+  user_saves_post  user_saves_post[]
+  vote             vote[]
+
+  @@index([fk_owner_user_id], map: "post_FK")
+}
+
+model post_has_tag {
+  fk_post_id Int
+  fk_tag_id  Int
+  post       post @relation(fields: [fk_post_id], references: [id], onUpdate: Restrict, map: "post_has_tag_FK")
+  tag        tag  @relation(fields: [fk_tag_id], references: [id], onUpdate: Restrict, map: "post_has_tag_FK_1")
+
+  @@id([fk_post_id, fk_tag_id])
+  @@index([fk_tag_id], map: "post_has_tag_FK_1")
+}
+
+model project {
+  id                Int          @id @default(autoincrement())
+  title             String       @db.VarChar(100)
+  body              String?      @db.VarChar(10000)
+  creation_date     DateTime     @default(now()) @db.DateTime(0)
+  start_date        DateTime?    @db.Date
+  release_date      DateTime?    @db.Date
+  short_description String       @db.VarChar(200)
+  logo              String?      @db.VarChar(100)
+  website           String?      @db.VarChar(200)
+  fk_user_id        Int
+  user              user         @relation(fields: [fk_user_id], references: [id], onUpdate: Restrict, map: "project_FK")
+  screenshot        screenshot[]
+
+  @@index([fk_user_id], map: "project_FK")
+}
+
+model screenshot {
+  id            Int     @id @default(autoincrement())
+  fk_project_id Int
+  url           String  @db.VarChar(100)
+  sorting_index Int     @default(0)
+  project       project @relation(fields: [fk_project_id], references: [id], onUpdate: Restrict, map: "screenshot_FK")
+
+  @@index([fk_project_id], map: "screenshot_FK")
+}
+
+model tag {
+  id           Int            @id @default(autoincrement())
+  name         String         @db.VarChar(100)
+  post_has_tag post_has_tag[]
+}
+
+model user {
+  id                                  Int               @id @default(autoincrement())
+  email                               String            @db.VarChar(100)
+  username                            String            @db.VarChar(100)
+  password                            String            @db.VarChar(255)
+  verificationcode                    String?           @db.VarChar(100)
+  verified                            Boolean           @default(false)
+  firstname                           String?           @db.VarChar(100)
+  lastname                            String?           @db.VarChar(100)
+  website                             String?           @db.VarChar(100)
+  github                              String?           @db.VarChar(100)
+  twitter                             String?           @db.VarChar(100)
+  instagram                           String?           @db.VarChar(100)
+  country                             String?           @db.VarChar(100)
+  state                               String?           @db.VarChar(100)
+  dribbble                            String?           @db.VarChar(100)
+  linkedin                            String?           @db.VarChar(100)
+  profileimage                        String            @default("https://i.imgur.com/pWHgnHA.jpg") @db.VarChar(50)
+  creationdate                        DateTime          @default(now()) @db.DateTime(0)
+  bio                                 String?           @db.VarChar(1000)
+  color                               String            @default("#0cc87e") @db.VarChar(10)
+  follower_follower_followee_idTouser follower[]        @relation("follower_followee_idTouser")
+  follower_follower_follower_idTouser follower[]        @relation("follower_follower_idTouser")
+  post                                post[]
+  project                             project[]
+  user_saves_post                     user_saves_post[]
+  vote                                vote[]
+}
+
+model user_saves_post {
+  user_id Int
+  post_id Int
+  savedAt DateTime @default(now()) @db.DateTime(0)
+  post    post     @relation(fields: [post_id], references: [id], onUpdate: Restrict, map: "user_saves_post_FK")
+  user    user     @relation(fields: [user_id], references: [id], onUpdate: Restrict, map: "user_saves_post_FK_1")
+
+  @@id([user_id, post_id])
+  @@index([post_id], map: "user_saves_post_FK")
+}
+
+model vote {
+  user_id Int
+  post_id Int
+  value   Int
+  user    user @relation(fields: [user_id], references: [id], onUpdate: Restrict, map: "like_FK")
+  post    post @relation(fields: [post_id], references: [id], onUpdate: Restrict, map: "like_FK_1")
+
+  @@id([user_id, post_id])
+  @@index([post_id], map: "like_FK_1")
+}

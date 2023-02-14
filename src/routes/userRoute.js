@@ -1,93 +1,85 @@
 const express = require('express')
 const router = express.Router()
 const bcrypt = require('bcrypt')
-const database = require('../database')
 const passport = require('passport')
+const { PrismaClient } = require('@prisma/client')
+const prisma = new PrismaClient()
 
-router.get('/databyuserid/:userid', (req, res) => {
-  database.dbGetSingleRow('SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.bio, u.creationdate, (select count(followee_id) from follower where followee_id = u.id) as followers, (select count(follower_id) from follower where follower_id = u.id) as following, u.country, u.state, u.website, u.github, u.dribbble, u.linkedin, u.twitter, u.instagram, u.profileimage, u.color FROM user u WHERE u.id = ?', [req.params.userid], (result, err) => {
-    if (err) {
-      return res.status(500).json({ err })
-    } else {
-      if (result) {
-        return res.send(result)
-      } else {
-        return res.send({ status: 204 })
-      }
+const use = fn => (req, res, next) =>
+  Promise.resolve(fn(req, res, next)).catch(next)
+
+router.get('/databyuserid/:userid', use(async (req, res) => {
+  const userId = parseInt(req.params.userid)
+  const result = await prisma.user.findFirst({
+    where: { id: userId }
+  })
+
+  if (result) {
+    return res.send(result)
+  } else {
+    return res.send({ status: 204 })
+  }
+}))
+
+router.get('/databyusername/:username', use(async (req, res) => {
+  const result = await prisma.user.findFirst({
+    where: { username: req.params.username }
+  })
+
+  if (result) {
+    return res.send(result)
+  } else {
+    return res.send({ status: 204 })
+  }
+}))
+
+router.get('/users', use(async (req, res) => {
+  const result = await prisma.user.findMany()
+  return res.send(result)
+}))
+
+router.get('/usersbysearchterm/:searchterm', use(async (req, res) => {
+  const result = await prisma.user.findMany({
+    where: {
+      username: req.params.searchterm
     }
   })
-})
 
-router.get('/databyusername/:username', (req, res) => {
-  database.dbGetSingleRow('SELECT u.id, u.email, u.username, u.firstname, u.lastname, u.bio, u.creationdate, (select count(followee_id) from follower where followee_id = u.id) as followers, (select count(follower_id) from follower where follower_id = u.id) as following, u.country, u.state, u.website, u.github, u.dribbble, u.linkedin, u.twitter, u.instagram, u.profileimage, u.color FROM user u WHERE u.username = ?', [req.params.username], (result, err) => {
-    if (err) {
-      return res.status(500).json({ err })
-    } else {
-      if (result) {
-        return res.send(result)
-      } else {
-        return res.send({ status: 204 })
-      }
-    }
-  })
-})
+  return res.send(result)
+}))
 
-router.get('/users', async (req, res) => {
-  database.dbQuery('select * from user', [], (result, err) => {
-    if (err) {
-      return res.status(500).json({ err })
-    } else {
-      return res.send(result)
-    }
-  })
-})
-
-router.get('/usersbysearchterm/:searchterm', (req, res) => {
-  database.dbQuery('select * from user where username = ?', [req.params.searchterm], (result, err) => {
-    if (err) {
-      return res.status(500).json({ err })
-    } else {
-      return res.send(result)
-    }
-  })
-})
-
-router.post('/changedata', passport.authenticate('userAuth', { session: false }), async (req, res) => {
+router.post('/changedata', passport.authenticate('userAuth', { session: false }), use(async (req, res) => {
   if (/^(http:\/\/)/.test(req.body.website)) {
     req.body.website = req.body.website.slice(7)
   } else if (/^(https:\/\/)/.test(req.body.website)) {
     req.body.website = req.body.website.slice(8)
   }
 
-  database.getConnection((_err, con) => {
-    con.query(`
-    UPDATE user
-    SET 
-    firstname = ${con.escape(req.body.firstname)},
-    lastname = ${con.escape(req.body.lastname)},
-    country = ${con.escape(req.body.country)},
-    state = ${con.escape(req.body.state)},
-    bio = ${con.escape(req.body.bio)},
-    instagram = ${con.escape(req.body.instagram)},
-    twitter = ${con.escape(req.body.twitter)},
-    dribbble = ${con.escape(req.body.dribbble)},
-    github = ${con.escape(req.body.github)},
-    linkedin = ${con.escape(req.body.linkedin)},
-    website = ${con.escape(req.body.website)},
-    profileimage = ${con.escape(req.body.profilepicture)},
-    color = ${con.escape(req.body.color)}
-    WHERE id = ${con.escape(req.body.id)}`, (err) => {
-      con.release()
-      if (err) {
-        return res.status(500).json({ err })
-      } else {
-        return res.json({ status: 200, header: 'Juhuu', message: 'Stonks' }).send()
-      }
-    })
+  await prisma.user.update({
+    where: {
+      id: req.body.id
+    },
+    data: {
+      firstname: req.body.firstname,
+      lastname: req.body.lastname,
+      country: req.body.country,
+      state: req.body.state,
+      bio: req.body.bio,
+      instagram: req.body.instagram,
+      twitter: req.body.twitter,
+      dribbble: req.body.dribbble,
+      github: req.body.github,
+      linkedin: req.body.linkedin,
+      website: req.body.website,
+      profileimage: req.body.profilepicture,
+      color: req.body.color
+    }
   })
-})
 
-router.post('/changepw', passport.authenticate('userAuth', { session: false }), async (req, res) => {
+  return res.json({ status: 200, header: 'Juhuu', message: 'Stonks' }).send()
+}))
+
+router.post('/changepw', passport.authenticate('userAuth', { session: false }), use(async (req, res) => {
   const pwStrength = /^(?=.*[A-Za-z])(?=.*\d)[\S]{6,}$/ // mindestens 6 Stellen && eine Zahl && ein Buchstabe
 
   if (!req.body.oldPassword || !req.body.newPassword1 || !req.body.newPassword2 || !req.body.id) {
@@ -98,66 +90,66 @@ router.post('/changepw', passport.authenticate('userAuth', { session: false }), 
     return res.json({ header: 'Fehler', message: 'Das Passwort muss mindestens 6 Zeichen lang sein. Darunter müssen mindestens ein Buchstabe und eine Zahl sein.' })
   }
 
-  database.dbGetSingleRow('SELECT * FROM user WHERE id = ?', [req.body.id], (err, user) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: req.body.id
+    }
+  })
+
+  // FIX
+  if (!user) {
+    return res.json({ header: 'Fehler', message: 'Dieser Benutzer existiert nicht!' })
+  }
+
+  bcrypt.compare(req.body.oldPassword, user.password, (err, isMatch) => {
     if (err) {
-      return res.status(400).json({ err })
+      return res.status(500).json({ err })
     }
-
-    // FIX
-    if (!user) {
-      return res.json({ header: 'Fehler', message: 'Dieser Benutzer existiert nicht!' })
-    }
-
-    bcrypt.compare(req.body.oldPassword, user.password, (err, isMatch) => {
-      if (err) {
-        return res.status(500).json({ err })
-      }
-      if (isMatch) {
-        bcrypt.genSalt(512, (_err, salt) => {
-          bcrypt.hash(req.body.newPassword1, salt, (_err, enc) => {
-            database.dbQuery('UPDATE user SET password = ? WHERE id = ?', [enc, req.body.id], (err, data) => {
-              if (err) {
-                return res.status(500).json({ err })
-              }
-              return res.json({ header: 'Erfolgreich!', message: 'Passwort wurde geändert!' })
-            })
+    if (isMatch) {
+      bcrypt.genSalt(512, (_err, salt) => {
+        bcrypt.hash(req.body.newPassword1, salt, async (_err, enc) => {
+          await prisma.user.update({
+            where: {
+              id: req.body.id
+            },
+            data: {
+              password: enc
+            }
           })
+          return res.json({ header: 'Erfolgreich!', message: 'Passwort wurde geändert!' })
         })
-      } else {
-        return res.json({ header: 'Fehler', message: 'Das Passwort ist falsch!' })
-      }
-    })
-  })
-})
-
-router.get('/numberoftotalusers', (_req, res) => {
-  database.dbGetSingleValue('SELECT count(id) as val FROM user', [], 0, (result, err) => {
-    if (err) {
-      return res.status(500).json({ err })
+      })
     } else {
-      return res.send({ numberoftotalusers: result })
+      return res.json({ header: 'Fehler', message: 'Das Passwort ist falsch!' })
     }
   })
-})
+}))
 
-router.get('/numberofideasbyuser/:id', (req, res) => {
-  database.dbGetSingleValue('SELECT count(id) as val FROM post where fk_owner_user_id = ?', [req.params.id], 0, (result, err) => {
-    if (err) {
-      return res.status(500).json({ err })
-    } else {
-      return res.send({ numberofideas: result })
+router.get('/numberoftotalusers', use(async (_req, res) => {
+  const result = await prisma.user.count()
+  return res.send({ numberoftotalusers: result })
+}))
+
+router.get('/numberofideasbyuser/:id', use(async (req, res) => {
+  const userId = parseInt(req.params.id)
+  const result = await prisma.post.count({
+    where: {
+      fk_owner_user_id: userId
     }
   })
-})
 
-router.get('/numberofprojectsbyuser/:id', (req, res) => {
-  database.dbGetSingleValue('SELECT count(id) as val FROM project where fk_user_id = ?', [req.params.id], 0, (result, err) => {
-    if (err) {
-      return res.status(500).json({ err })
-    } else {
-      return res.send({ numberofprojects: result })
+  return res.send({ numberofideas: result })
+}))
+
+router.get('/numberofprojectsbyuser/:id', use(async (req, res) => {
+  const userId = parseInt(req.params.id)
+  const result = await prisma.project.count({
+    where: {
+      fk_user_id: userId
     }
   })
-})
+
+  return res.send({ numberofprojects: result })
+}))
 
 module.exports = router
