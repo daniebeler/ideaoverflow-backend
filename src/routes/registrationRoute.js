@@ -5,6 +5,9 @@ const database = require('../database')
 const helper = require('../helper')
 
 router.post('/register', async (req, res) => {
+  // #swagger.tags = ['Authentication']
+  // #swagger.description = 'Registers a new user.'
+
   database.getConnection((_err, con) => {
     if (!req.body.email || !req.body.username || !req.body.password1 || !req.body.password2) {
       con.release()
@@ -53,6 +56,9 @@ router.post('/register', async (req, res) => {
 })
 
 router.post('/login', async (req, res) => {
+  // #swagger.tags = ['Authentication']
+  // #swagger.description = 'Login a user.'
+
   if (!req.body.email || !req.body.password) {
     return res.json({ message: 'Empty fields!' })
   } else {
@@ -99,6 +105,8 @@ router.post('/login', async (req, res) => {
 })
 
 router.get('/verify/:code', (req, res) => {
+  // #swagger.tags = ['Authentication']
+
   database.getConnection((_err, con) => {
     con.query(`SELECT verified FROM user WHERE verificationcode = ${con.escape(req.params.code)}`, (err, result) => {
       if (err) {
@@ -121,6 +129,8 @@ router.get('/verify/:code', (req, res) => {
 })
 
 router.post('/sendverificationmailagain', async (req, res) => {
+  // #swagger.tags = ['Authentication']
+
   database.getConnection((err, con) => {
     if (err) {
       return res.status(500).json(err)
@@ -140,6 +150,8 @@ router.post('/sendverificationmailagain', async (req, res) => {
 })
 
 router.post('/resetpassword', async (req, res) => {
+  // #swagger.tags = ['Authentication']
+
   database.getConnection((err, con) => {
     if (err) {
       return res.status(500).json(err)
@@ -162,6 +174,8 @@ router.post('/resetpassword', async (req, res) => {
 })
 
 router.get('/checkresetcode/:code', (req, res) => {
+  // #swagger.tags = ['Authentication']
+
   database.dbQuery(
     'SELECT * FROM user WHERE verificationcode = ?', [req.params.code], (result, err) => {
       if (err) {
@@ -179,6 +193,8 @@ router.get('/checkresetcode/:code', (req, res) => {
 })
 
 router.post('/setpassword', async (req, res) => {
+  // #swagger.tags = ['Authentication']
+
   database.getConnection((err, con) => {
     if (err) {
       return res.status(500).json(err)

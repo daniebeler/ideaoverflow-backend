@@ -9,6 +9,8 @@ const use = fn => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next)
 
 router.post('/follow', auth, use(async (req, res) => {
+  // #swagger.tags = ['Followers']
+
   await prisma.follower.create({
     data: {
       follower_id: req.body.followerID,
@@ -20,6 +22,8 @@ router.post('/follow', auth, use(async (req, res) => {
 ))
 
 router.post('/unfollow', auth, async (req, res) => {
+  // #swagger.tags = ['Followers']
+
   await prisma.follower.deleteMany({
     where: {
       follower_id: req.body.followerID,
@@ -30,6 +34,8 @@ router.post('/unfollow', auth, async (req, res) => {
 })
 
 router.post('/checkfollow', async (req, res) => {
+  // #swagger.tags = ['Followers']
+
   database.dbGetSingleValue(
     'SELECT EXISTS(SELECT * FROM follower WHERE followee_id = ? AND follower_id = ?) as val',
     [req.body.followeeID, req.body.followerID],
@@ -44,6 +50,8 @@ router.post('/checkfollow', async (req, res) => {
 })
 
 router.get('/followersbyusername/:username', (req, res) => {
+  // #swagger.tags = ['Followers']
+
   database.dbQuery(
     'select u.* from follower f inner join user u on u.id = f.follower_id where f.followee_id = (select id from user where username = ?)',
     [req.params.username],
@@ -57,6 +65,8 @@ router.get('/followersbyusername/:username', (req, res) => {
 })
 
 router.get('/followeesbyusername/:username', (req, res) => {
+  // #swagger.tags = ['Followers']
+
   database.dbQuery(
     'select u.* from follower f inner join user u on u.id = f.followee_id where f.follower_id = (select id from user where username = ?)',
     [req.params.username],

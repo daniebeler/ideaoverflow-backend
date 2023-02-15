@@ -3,6 +3,9 @@ const express = require('express')
 const app = express()
 const cors = require('cors')
 
+const swaggerUi = require('swagger-ui-express')
+const swaggerFile = require('../swagger-output.json')
+
 app.use(cors())
 app.use(express.json())
 
@@ -22,6 +25,7 @@ const projectRoute = require('./routes/projectRoute')
 app.use('/project', projectRoute)
 
 app.use(ErrorHandler)
+app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerFile))
 
 app.listen(3003, () => {
   console.log('Server started using http on port 3003')

@@ -4,6 +4,8 @@ const database = require('../database')
 const passport = require('passport')
 
 router.get('/byid/:id', (req, res) => {
+  // #swagger.tags = ['Projects']
+
   database.getConnection((_err, con) => {
     con.query(`
       SELECT p.*, u.profileimage, u.username
@@ -45,6 +47,8 @@ router.get('/byid/:id', (req, res) => {
 })
 
 router.post('/create', passport.authenticate('userAuth', { session: false }), async (req, res) => {
+  // #swagger.tags = ['Projects']
+
   database.getConnection((_err, con) => {
     con.query(`
     INSERT INTO project (fk_user_id, title, short_description, logo, body, website, release_date)
@@ -90,6 +94,8 @@ router.post('/create', passport.authenticate('userAuth', { session: false }), as
 })
 
 router.post('/update', passport.authenticate('userAuth', { session: false }), async (req, res) => {
+  // #swagger.tags = ['Projects']
+
   if (/^(http:\/\/)/.test(req.body.website)) {
     req.body.website = req.body.website.slice(7)
   } else if (/^(https:\/\/)/.test(req.body.website)) {
@@ -119,6 +125,8 @@ router.post('/update', passport.authenticate('userAuth', { session: false }), as
 })
 
 router.post('/projects', (req, res) => {
+  // #swagger.tags = ['Projects']
+
   let usernameFilter = ''
   let order = 'ORDER BY coalesce(p.release_date, p.creation_date) DESC'
 
@@ -153,6 +161,8 @@ router.post('/projects', (req, res) => {
 })
 
 router.get('/numberoftotalprojects', (req, res) => {
+  // #swagger.tags = ['Projects']
+
   database.getConnection((_err, con) => {
     con.query('SELECT count(id) as numberoftotalprojects FROM project', (err, result) => {
       con.release()
@@ -166,6 +176,8 @@ router.get('/numberoftotalprojects', (req, res) => {
 })
 
 router.get('/checkifprojectbelongstouser/:projectid', passport.authenticate('userAuth', { session: false }), (req, res) => {
+  // #swagger.tags = ['Projects']
+
   database.getConnection((_err, con) => {
     con.query(`
       SELECT *

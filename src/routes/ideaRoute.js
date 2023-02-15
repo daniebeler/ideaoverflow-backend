@@ -11,6 +11,8 @@ const use = fn => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next)
 
 router.get('/byid/:id', use(async (req, res) => {
+  // #swagger.tags = ['Ideas']
+
   const ideaId = parseInt(req.params.id)
   const result = await prisma.post.findUnique({
     where: {
@@ -38,6 +40,8 @@ router.get('/byid/:id', use(async (req, res) => {
 }))
 
 router.get('/byusername/:username', use(async (req, res) => {
+  // #swagger.tags = ['Ideas']
+
   console.log(req.query)
   const query = helper.convertQuery(req.query)
   const result = await prisma.post.findMany({
@@ -73,6 +77,8 @@ router.get('/byusername/:username', use(async (req, res) => {
 }))
 
 router.get('/all', use(async (req, res) => {
+  // #swagger.tags = ['Ideas']
+
   const query = helper.convertQuery(req.query)
   const result = await prisma.post.findMany({
     skip: query.skip ?? 0,
@@ -102,6 +108,8 @@ router.get('/all', use(async (req, res) => {
 }))
 
 router.post('/create', passport.authenticate('userAuth', { session: false }), async (req, res) => {
+  // #swagger.tags = ['Ideas']
+
   database.dbInsert('INSERT INTO post (fk_owner_user_id, title, body) VALUES (?, ?, ?)',
     [req.body.userID, req.body.header, req.body.body],
     (result, err) => {
@@ -114,6 +122,8 @@ router.post('/create', passport.authenticate('userAuth', { session: false }), as
 })
 
 router.post('/update', passport.authenticate('userAuth', { session: false }), async (req, res) => {
+  // #swagger.tags = ['Ideas']
+
   database.dbQuery('UPDATE post SET title = ?, body = ? WHERE id = ?',
     [req.body.title, req.body.body, req.body.postId],
     (result, err) => {
@@ -126,11 +136,15 @@ router.post('/update', passport.authenticate('userAuth', { session: false }), as
 })
 
 router.get('/numberoftotalideas', async (req, res) => {
+  // #swagger.tags = ['Ideas']
+
   const numberoftotalideas = await prisma.post.count()
   return res.send({ numberoftotalideas })
 })
 
 router.post('/ideas', (req, res) => {
+  // #swagger.tags = ['Ideas']
+
   let userIsLoggedInSelect = ''
   let userIsLoggedInJoin = ''
   let usernameFilter = ''
@@ -186,6 +200,8 @@ router.post('/ideas', (req, res) => {
 })
 
 router.post('/vote', passport.authenticate('userAuth', { session: false }), (req, res) => {
+  // #swagger.tags = ['Ideas']
+
   database.getConnection((_err, con) => {
     con.query(`
       INSERT INTO vote (user_id, post_id, value)
@@ -203,6 +219,8 @@ router.post('/vote', passport.authenticate('userAuth', { session: false }), (req
 })
 
 router.post('/save', passport.authenticate('userAuth', { session: false }), (req, res) => {
+  // #swagger.tags = ['Ideas']
+
   database.getConnection((_err, con) => {
     con.query(`
       INSERT IGNORE INTO user_saves_post (user_id, post_id)
@@ -219,6 +237,8 @@ router.post('/save', passport.authenticate('userAuth', { session: false }), (req
 })
 
 router.post('/unsave', passport.authenticate('userAuth', { session: false }), (req, res) => {
+  // #swagger.tags = ['Ideas']
+
   database.getConnection((_err, con) => {
     con.query(`
       DELETE FROM user_saves_post WHERE user_id = ${req.body.userId} AND post_id = ${req.body.ideaId}
@@ -234,6 +254,8 @@ router.post('/unsave', passport.authenticate('userAuth', { session: false }), (r
 })
 
 router.get('/checkifideabelongstouser/:postid', passport.authenticate('userAuth', { session: false }), (req, res) => {
+  // #swagger.tags = ['Ideas']
+
   database.getConnection((_err, con) => {
     con.query(`
       SELECT *

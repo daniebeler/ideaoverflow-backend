@@ -9,6 +9,8 @@ const use = fn => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next)
 
 router.get('/databyuserid/:userid', use(async (req, res) => {
+  // #swagger.tags = ['Users']
+
   const userId = parseInt(req.params.userid)
   const result = await prisma.user.findFirst({
     where: { id: userId }
@@ -22,6 +24,8 @@ router.get('/databyuserid/:userid', use(async (req, res) => {
 }))
 
 router.get('/databyusername/:username', use(async (req, res) => {
+  // #swagger.tags = ['Users']
+
   const result = await prisma.user.findFirst({
     where: { username: req.params.username }
   })
@@ -34,11 +38,15 @@ router.get('/databyusername/:username', use(async (req, res) => {
 }))
 
 router.get('/users', use(async (req, res) => {
+  // #swagger.tags = ['Users']
+
   const result = await prisma.user.findMany()
   return res.send(result)
 }))
 
 router.get('/usersbysearchterm/:searchterm', use(async (req, res) => {
+  // #swagger.tags = ['Users']
+
   const result = await prisma.user.findMany({
     where: {
       username: req.params.searchterm
@@ -49,6 +57,8 @@ router.get('/usersbysearchterm/:searchterm', use(async (req, res) => {
 }))
 
 router.post('/changedata', passport.authenticate('userAuth', { session: false }), use(async (req, res) => {
+  // #swagger.tags = ['Users']
+
   if (/^(http:\/\/)/.test(req.body.website)) {
     req.body.website = req.body.website.slice(7)
   } else if (/^(https:\/\/)/.test(req.body.website)) {
@@ -80,6 +90,8 @@ router.post('/changedata', passport.authenticate('userAuth', { session: false })
 }))
 
 router.post('/changepw', passport.authenticate('userAuth', { session: false }), use(async (req, res) => {
+  // #swagger.tags = ['Users']
+
   const pwStrength = /^(?=.*[A-Za-z])(?=.*\d)[\S]{6,}$/ // mindestens 6 Stellen && eine Zahl && ein Buchstabe
 
   if (!req.body.oldPassword || !req.body.newPassword1 || !req.body.newPassword2 || !req.body.id) {
@@ -126,11 +138,15 @@ router.post('/changepw', passport.authenticate('userAuth', { session: false }), 
 }))
 
 router.get('/numberoftotalusers', use(async (_req, res) => {
+  // #swagger.tags = ['Users']
+
   const result = await prisma.user.count()
   return res.send({ numberoftotalusers: result })
 }))
 
 router.get('/numberofideasbyuser/:id', use(async (req, res) => {
+  // #swagger.tags = ['Users']
+
   const userId = parseInt(req.params.id)
   const result = await prisma.post.count({
     where: {
@@ -142,6 +158,8 @@ router.get('/numberofideasbyuser/:id', use(async (req, res) => {
 }))
 
 router.get('/numberofprojectsbyuser/:id', use(async (req, res) => {
+  // #swagger.tags = ['Users']
+
   const userId = parseInt(req.params.id)
   const result = await prisma.project.count({
     where: {
