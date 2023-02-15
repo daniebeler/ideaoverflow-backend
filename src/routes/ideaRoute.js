@@ -5,6 +5,7 @@ const database = require('../database')
 const passport = require('passport')
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
+const helper = require('../helper')
 
 const use = fn => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next)
@@ -38,13 +39,12 @@ router.get('/byid/:id', use(async (req, res) => {
 
 router.get('/byusername/:username', use(async (req, res) => {
   console.log(req.query)
-  const skip = parseInt(req.query.skip ?? 0)
-  const take = parseInt(req.query.take ?? 100)
+  const query = helper.convertQuery(req.query)
   const result = await prisma.post.findMany({
-    skip: skip ?? 0,
-    take: take ?? 100,
+    skip: query.skip ?? 0,
+    take: query.take ?? 100,
     orderBy: {
-      creation_date: 'desc'
+      creation_date: query.orderDirection
     },
     where: {
       user: {
@@ -73,13 +73,12 @@ router.get('/byusername/:username', use(async (req, res) => {
 }))
 
 router.get('/all', use(async (req, res) => {
-  const skip = parseInt(req.query.skip ?? 0)
-  const take = parseInt(req.query.take ?? 100)
+  const query = helper.convertQuery(req.query)
   const result = await prisma.post.findMany({
-    skip: skip ?? 0,
-    take: take ?? 100,
+    skip: query.skip ?? 0,
+    take: query.take ?? 100,
     orderBy: {
-      creation_date: 'desc'
+      creation_date: query.orderDirection
     },
     include: {
       user: {
