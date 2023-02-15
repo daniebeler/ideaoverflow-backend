@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const bcrypt = require('bcrypt')
-const passport = require('passport')
+const auth = require('../middleware/userAuth')
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
 
@@ -56,7 +56,7 @@ router.get('/usersbysearchterm/:searchterm', use(async (req, res) => {
   return res.send(result)
 }))
 
-router.post('/changedata', passport.authenticate('userAuth', { session: false }), use(async (req, res) => {
+router.post('/changedata', auth, use(async (req, res) => {
   // #swagger.tags = ['Users']
 
   if (/^(http:\/\/)/.test(req.body.website)) {
@@ -89,7 +89,7 @@ router.post('/changedata', passport.authenticate('userAuth', { session: false })
   return res.json({ status: 200, header: 'Juhuu', message: 'Stonks' }).send()
 }))
 
-router.post('/changepw', passport.authenticate('userAuth', { session: false }), use(async (req, res) => {
+router.post('/changepw', auth, use(async (req, res) => {
   // #swagger.tags = ['Users']
 
   const pwStrength = /^(?=.*[A-Za-z])(?=.*\d)[\S]{6,}$/ // mindestens 6 Stellen && eine Zahl && ein Buchstabe

@@ -1,7 +1,12 @@
 const express = require('express')
 const router = express.Router()
 const database = require('../database')
-const passport = require('passport')
+const auth = require('../middleware/userAuth')
+const { PrismaClient } = require('@prisma/client')
+const prisma = new PrismaClient()
+
+const use = fn => (req, res, next) =>
+  Promise.resolve(fn(req, res, next)).catch(next)
 
 router.get('/byid/:id', (req, res) => {
   // #swagger.tags = ['Projects']
@@ -46,7 +51,7 @@ router.get('/byid/:id', (req, res) => {
   })
 })
 
-router.post('/create', passport.authenticate('userAuth', { session: false }), async (req, res) => {
+router.post('/create', auth, async (req, res) => {
   // #swagger.tags = ['Projects']
 
   database.getConnection((_err, con) => {
@@ -93,7 +98,7 @@ router.post('/create', passport.authenticate('userAuth', { session: false }), as
   })
 })
 
-router.post('/update', passport.authenticate('userAuth', { session: false }), async (req, res) => {
+router.post('/update', auth, async (req, res) => {
   // #swagger.tags = ['Projects']
 
   if (/^(http:\/\/)/.test(req.body.website)) {
@@ -160,42 +165,29 @@ router.post('/projects', (req, res) => {
   })
 })
 
-router.get('/numberoftotalprojects', (req, res) => {
+router.get('/numberoftotalprojects', use(async (req, res) => {
   // #swagger.tags = ['Projects']
 
-  database.getConnection((_err, con) => {
-    con.query('SELECT count(id) as numberoftotalprojects FROM project', (err, result) => {
-      con.release()
-      if (err) {
-        return res.status(500).json({ err })
-      } else {
-        return res.send(result[0])
-      }
-    })
-  })
-})
+  const result = await prisma.project.count()
+  return res.send({ numberoftotalprojects: result })
+}))
 
-router.get('/checkifprojectbelongstouser/:projectid', passport.authenticate('userAuth', { session: false }), (req, res) => {
+router.get('/checkifprojectbelongstouser/:projectid', auth, use(async (req, res) => {
   // #swagger.tags = ['Projects']
 
-  database.getConnection((_err, con) => {
-    con.query(`
-      SELECT *
-      FROM project
-      WHERE id = ${con.escape(req.params.projectid)}
-     `, (err, post) => {
-      con.release()
-      if (err) {
-        return res.status(500).json({ err })
-      } else {
-        if (post[0] && post[0].fk_user_id === req.user.id) {
-          return res.send({ accessgranted: true })
-        } else {
-          return res.send({ accessgranted: false })
-        }
-      }
-    })
+  const projectId = parseInt(req.params.projectid)
+  const result = await prisma.project.findFirst({
+    where: {
+      id: projectId,
+      fk_user_id: req.user.id
+    }
   })
-})
+
+  if (result) {
+    return res.send({ accessgranted: true })
+  } else {
+    return res.send({ accessgranted: false })
+  }
+}))
 
 module.exports = router

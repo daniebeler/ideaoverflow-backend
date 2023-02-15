@@ -3,8 +3,8 @@ require('dotenv').config()
 
 const doc = {
   info: {
-    title: 'Kommiuniti API',
-    description: 'API for Kommiuniti App'
+    title: 'Idea Overflow API',
+    description: 'API for Idea Overflow'
   },
   host: process.env.HOST,
   schemes: ['http', 'https'],
