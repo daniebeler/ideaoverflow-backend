@@ -1,7 +1,6 @@
 const express = require('express')
 const router = express.Router()
 const bcrypt = require('bcrypt')
-const database = require('../database')
 const helper = require('../helper')
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
@@ -178,65 +177,57 @@ router.post('/resetpassword', use(async (req, res) => {
   return res.status(200).json({ header: 'Nice!', message: 'Mail sent to ' + req.body.email + '!' })
 }))
 
-router.get('/checkresetcode/:code', (req, res) => {
+router.get('/checkresetcode/:code', use(async (req, res) => {
   // #swagger.tags = ['Authentication']
 
-  database.dbQuery(
-    'SELECT * FROM user WHERE verificationcode = ?', [req.params.code], (result, err) => {
-      if (err) {
-        return res.status(500).json({ err })
-      }
-      if (result.length === 0) {
-        return res.status(200).json({ message: 'This code does not exist!', exists: false })
-      }
-      if (result.length === 1) {
-        return res.status(200).json({ exists: true })
-      } else {
-        return res.status(200).json({ message: 'This code exists multiple times. Please contact hiebeler.daniel@gmail.com', exists: false })
-      }
-    })
-})
+  const result = await prisma.user.findFirst({
+    where: {
+      verificationcode: req.params.code
+    }
+  })
+
+  if (!result) {
+    return res.status(200).json({ message: 'This code does not exist!', exists: false })
+  } else {
+    return res.status(200).json({ exists: true })
+  }
+}))
 
 router.post('/setpassword', async (req, res) => {
   // #swagger.tags = ['Authentication']
 
-  database.getConnection((err, con) => {
-    if (err) {
-      return res.status(500).json(err)
-    }
-    if (!req.body.pw1 || !req.body.pw2) {
-      con.release()
-      return res.json({ header: 'Error', message: 'Informationen unvollständig!', stay: true })
-    } else if (req.body.pw1 !== req.body.pw2) {
-      con.release()
-      return res.json({ header: 'Error', message: 'Passwords are not the same!', stay: true })
-    } else if (!helper.testPasswordStrength(req.body.pw1)) {
-      con.release()
-      return res.json({ header: 'Error', message: 'The password must be at least 6 characters long. There must be at least one letter and one number.', stay: true })
-    }
+  if (!req.body.pw1 || !req.body.pw2) {
+    return res.json({ header: 'Error', message: 'Informationen unvollständig!', stay: true })
+  } else if (req.body.pw1 !== req.body.pw2) {
+    return res.json({ header: 'Error', message: 'Passwords are not the same!', stay: true })
+  } else if (!helper.testPasswordStrength(req.body.pw1)) {
+    return res.json({ header: 'Error', message: 'The password must be at least 6 characters long. There must be at least one letter and one number.', stay: true })
+  }
 
-    con.query('SELECT * FROM user WHERE verificationcode = ?', [req.body.vcode], (err, users) => {
-      if (err) {
-        con.release()
-        return res.status(500).json({ err })
-      }
-      if (users.length === 0) {
-        con.release()
-        return res.json({ header: 'Error', message: 'This code does not exist', stay: false })
-      }
+  const foundUser = await prisma.user.findFirst({
+    where: {
+      verificationcode: req.body.vcode
+    }
+  })
 
-      bcrypt.genSalt(512, (_err, salt) => {
-        bcrypt.hash(req.body.pw1, salt, (_err, enc) => {
-          con.query('UPDATE user SET verified = 1, password = ?, verificationcode = ? WHERE verificationcode = ?', [enc, '', req.body.vcode], (err, _resutl) => {
-            if (err) {
-              con.release()
-              return res.status(500).json({ err })
-            }
-            con.release()
-            return res.json({ header: 'Congrats', message: 'Your password has been changed', stay: false })
-          })
-        })
+  if (!foundUser) {
+    return res.json({ header: 'Error', message: 'This code does not exist', stay: false })
+  }
+
+  bcrypt.genSalt(512, (_err, salt) => {
+    bcrypt.hash(req.body.pw1, salt, async (_err, enc) => {
+      await prisma.user.update({
+        where: {
+          verificationcode: req.body.vcode
+        },
+        data: {
+          verified: 1,
+          password: enc,
+          verificationcode: ''
+        }
       })
+
+      return res.json({ header: 'Congrats', message: 'Your password has been changed', stay: false })
     })
   })
 })
