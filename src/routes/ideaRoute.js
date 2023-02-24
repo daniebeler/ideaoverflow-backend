@@ -75,10 +75,9 @@ router.get('/byid/:id', optionalAuth, use(async (req, res) => {
   delete result.user_saves_post
 
   if (result) {
-    console.log(result)
-    return res.send(result)
+    return helper.resSend(res, result)
   } else {
-    return res.send({ status: 204 })
+    return helper.resSend(res, {})
   }
 }))
 
@@ -112,8 +111,10 @@ router.get('/byusername/:username', use(async (req, res) => {
     }
   })
 
+  console.log(result.length)
+
   if (result) {
-    return res.send(result)
+    return helper.resSend(res, result)
   } else {
     return res.send({ status: 204 })
   }
@@ -144,8 +145,7 @@ router.get('/all', use(async (req, res) => {
   })
 
   if (result) {
-    console.log(result)
-    return res.send(result)
+    return helper.resSend(res, result)
   } else {
     return res.send({ status: 204 })
   }

@@ -63,46 +63,36 @@ router.post('/login', use(async (req, res) => {
   // #swagger.description = 'Login a user.'
 
   if (!req.body.email || !req.body.password) {
-    return res.json({ message: 'Empty fields!' })
+    return helper.resSend(res, null, 'Error', 'Empty fields')
   } else {
     const foundUser = await prisma.user.findFirst({
       where: {
         email: req.body.email
+      },
+      select: {
+        password: true,
+        id: true,
+        email: true
       }
     })
 
+    console.log(foundUser)
+
     if (!foundUser) {
-      return res.json({ message: 'This user does not exist!' })
+      return helper.resSend(res, null, 'Error', 'Wrong email or password')
     }
 
-    if (foundUser.verified === 1 || foundUser.verified === 2) {
-      bcrypt.compare(req.body.password, foundUser.password, async (err, isMatch) => {
-        if (err) {
-          return res.status(500).json({ err })
-        }
-        if (!isMatch) {
-          return res.json({ message: 'Wrong password!', wrongpw: true })
-        } else {
-          if (foundUser.verified === 2) {
-            await prisma.user.update({
-              where: {
-                id: foundUser.id
-              },
-              data: {
-                verified: 1,
-                verificationcode: ''
-              }
-            })
-          }
-
-          const usertoken = helper.createJWT(foundUser.id, foundUser.email, foundUser.username)
-          const answer = { token: usertoken }
-          return res.json(answer)
-        }
-      })
-    } else {
-      return res.json({ notverified: true })
-    }
+    bcrypt.compare(req.body.password, foundUser.password, async (err, isMatch) => {
+      if (err) {
+        return helper.resSend(res, null, 'Error', 'Unknown error')
+      }
+      if (!isMatch) {
+        return helper.resSend(res, null, 'Error', 'Wrong email or password')
+      } else {
+        const usertoken = helper.createJWT(foundUser.id, foundUser.email, foundUser.username)
+        return helper.resSend(res, { token: usertoken })
+      }
+    })
   }
 }))
 

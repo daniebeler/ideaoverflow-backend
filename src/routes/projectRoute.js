@@ -4,6 +4,7 @@ const database = require('../database')
 const { auth } = require('../middleware/userAuth')
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
+const helper = require('../helper')
 
 const use = fn => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next)
@@ -169,7 +170,7 @@ router.get('/numberoftotalprojects', use(async (req, res) => {
   // #swagger.tags = ['Projects']
 
   const result = await prisma.project.count()
-  return res.send({ numberoftotalprojects: result })
+  return helper.resSend(res, { numberoftotalprojects: result })
 }))
 
 router.get('/checkifprojectbelongstouser/:projectid', auth, use(async (req, res) => {

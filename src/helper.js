@@ -52,5 +52,20 @@ module.exports = {
     obj.orderDirection = query.reverse === 'true' ? 'asc' : 'desc'
 
     return obj
-  }
+  },
+
+  resSend(res, data, status, error) {
+    data = data ?? {}
+    status = status?.toString() ?? this.resStatuses.ok
+    error = error ?? ''
+
+    const rspJson = {}
+    rspJson.status = status
+    rspJson.error = error
+    rspJson.data = data
+
+    res.send(JSON.stringify(rspJson))
+  },
+
+  resStatuses: Object.freeze({ ok: 'OK', error: 'Error' })
 }

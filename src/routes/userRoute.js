@@ -4,11 +4,12 @@ const bcrypt = require('bcrypt')
 const { auth } = require('../middleware/userAuth')
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
+const helper = require('../helper')
 
 const use = fn => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next)
 
-router.get('/databyuserid/:userid', use(async (req, res) => {
+router.get('/byid/:userid', use(async (req, res) => {
   // #swagger.tags = ['Users']
 
   const userId = parseInt(req.params.userid)
@@ -17,13 +18,13 @@ router.get('/databyuserid/:userid', use(async (req, res) => {
   })
 
   if (result) {
-    return res.send(result)
+    return helper.resSend(res, result)
   } else {
-    return res.send({ status: 204 })
+    return helper.resSend(res, {})
   }
 }))
 
-router.get('/databyusername/:username', use(async (req, res) => {
+router.get('/byusername/:username', use(async (req, res) => {
   // #swagger.tags = ['Users']
 
   const result = await prisma.user.findFirst({
@@ -31,17 +32,17 @@ router.get('/databyusername/:username', use(async (req, res) => {
   })
 
   if (result) {
-    return res.send(result)
+    return helper.resSend(res, result)
   } else {
-    return res.send({ status: 204 })
+    return helper.resSend(res, {})
   }
 }))
 
-router.get('/users', use(async (req, res) => {
+router.get('/all', use(async (req, res) => {
   // #swagger.tags = ['Users']
 
   const result = await prisma.user.findMany()
-  return res.send(result)
+  return helper.resSend(res, result)
 }))
 
 router.get('/usersbysearchterm/:searchterm', use(async (req, res) => {
@@ -65,7 +66,7 @@ router.post('/changedata', auth, use(async (req, res) => {
     req.body.website = req.body.website.slice(8)
   }
 
-  await prisma.user.update({
+  const response = await prisma.user.update({
     where: {
       id: req.body.id
     },
@@ -86,7 +87,11 @@ router.post('/changedata', auth, use(async (req, res) => {
     }
   })
 
-  return res.json({ status: 200, header: 'Juhuu', message: 'Stonks' }).send()
+  if (!response) {
+    return helper.resSend(res, null, 'Error', 'Unknown error')
+  } else {
+    return helper.resSend(res)
+  }
 }))
 
 router.post('/changepw', auth, use(async (req, res) => {
@@ -94,45 +99,42 @@ router.post('/changepw', auth, use(async (req, res) => {
 
   const pwStrength = /^(?=.*[A-Za-z])(?=.*\d)[\S]{6,}$/ // mindestens 6 Stellen && eine Zahl && ein Buchstabe
 
-  if (!req.body.oldPassword || !req.body.newPassword1 || !req.body.newPassword2 || !req.body.id) {
-    return res.json({ header: 'Fehler', message: 'Informationen unvollständig!' })
-  } else if (req.body.newPassword1 !== req.body.newPassword2) {
-    return res.json({ header: 'Fehler', message: 'Neue Passwörter stimmen nicht überein!' })
-  } else if (!pwStrength.test(req.body.newPassword1)) {
-    return res.json({ header: 'Fehler', message: 'Das Passwort muss mindestens 6 Zeichen lang sein. Darunter müssen mindestens ein Buchstabe und eine Zahl sein.' })
+  if (!req.body.oldPassword || !req.body.newPassword) {
+    return helper.resSend(res, null, 'Error', 'Information missing')
+  } else if (!pwStrength.test(req.body.newPassword)) {
+    return helper.resSend(res, null, 'Error', 'Password too weak')
   }
 
   const user = await prisma.user.findUnique({
     where: {
-      id: req.body.id
+      id: req.user.id
     }
   })
 
-  // FIX
   if (!user) {
-    return res.json({ header: 'Fehler', message: 'Dieser Benutzer existiert nicht!' })
+    return helper.resSend(res, null, 'Error', 'Unknown Error')
   }
 
   bcrypt.compare(req.body.oldPassword, user.password, (err, isMatch) => {
     if (err) {
-      return res.status(500).json({ err })
+      return helper.resSend(res, null, 'Error', 'Unknown Error')
     }
     if (isMatch) {
       bcrypt.genSalt(512, (_err, salt) => {
-        bcrypt.hash(req.body.newPassword1, salt, async (_err, enc) => {
+        bcrypt.hash(req.body.newPassword, salt, async (_err, enc) => {
           await prisma.user.update({
             where: {
-              id: req.body.id
+              id: req.user.id
             },
             data: {
               password: enc
             }
           })
-          return res.json({ header: 'Erfolgreich!', message: 'Passwort wurde geändert!' })
+          return helper.resSend(res)
         })
       })
     } else {
-      return res.json({ header: 'Fehler', message: 'Das Passwort ist falsch!' })
+      return helper.resSend(res, null, 'Error', 'Wrong password')
     }
   })
 }))
@@ -141,7 +143,7 @@ router.get('/numberoftotalusers', use(async (_req, res) => {
   // #swagger.tags = ['Users']
 
   const result = await prisma.user.count()
-  return res.send({ numberoftotalusers: result })
+  return helper.resSend(res, { numberoftotalusers: result })
 }))
 
 router.get('/numberofideasbyuser/:id', use(async (req, res) => {
@@ -154,7 +156,7 @@ router.get('/numberofideasbyuser/:id', use(async (req, res) => {
     }
   })
 
-  return res.send({ numberofideas: result })
+  return helper.resSend(res, { numberofideas: result })
 }))
 
 router.get('/numberofprojectsbyuser/:id', use(async (req, res) => {
@@ -166,8 +168,7 @@ router.get('/numberofprojectsbyuser/:id', use(async (req, res) => {
       fk_user_id: userId
     }
   })
-
-  return res.send({ numberofprojects: result })
+  return helper.resSend(res, { numberofprojects: result })
 }))
 
 module.exports = router
