@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 const express = require('express')
 const router = express.Router()
-const auth = require('../middleware/userAuth')
+const { auth, optionalAuth } = require('../middleware/userAuth')
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
 const helper = require('../helper')
@@ -9,7 +9,7 @@ const helper = require('../helper')
 const use = fn => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next)
 
-router.get('/byid/:id', use(async (req, res) => {
+router.get('/byid/:id', optionalAuth, use(async (req, res) => {
   // #swagger.tags = ['Ideas']
 
   const query = helper.convertQuery(req.query)
@@ -34,7 +34,7 @@ router.get('/byid/:id', use(async (req, res) => {
       },
       user_saves_post: {
         where: {
-          user_id: query.userId
+          user_id: req?.user?.id
         }
       }
     }
@@ -54,19 +54,22 @@ router.get('/byid/:id', use(async (req, res) => {
     }
   })
 
-  const votevalue = await prisma.vote.findFirst({
-    where: {
-      post_id: ideaId,
-      user_id: query.userId
-    },
-    select: {
-      value: true
-    }
-  })
+  if (req.user?.id) {
+    const votevalue = await prisma.vote.findFirst({
+      where: {
+        post_id: ideaId,
+        user_id: req.user?.id
+      },
+      select: {
+        value: true
+      }
+    })
+
+    result.votevalue = votevalue?.value ?? 0
+  }
 
   result.upvotes = upvotes
   result.downvotes = downvotes
-  result.votevalue = votevalue?.value ?? 0
   result.saved = result.user_saves_post.length !== 0
 
   delete result.user_saves_post
