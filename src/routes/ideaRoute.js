@@ -12,10 +12,6 @@ const use = fn => (req, res, next) =>
 router.get('/byid/:id', optionalAuth, use(async (req, res) => {
   // #swagger.tags = ['Ideas']
 
-  const query = helper.convertQuery(req.query)
-
-  console.log(query)
-
   const ideaId = parseInt(req.params.id)
   const result = await prisma.post.findUnique({
     where: {
@@ -153,7 +149,7 @@ router.get('/all', use(async (req, res) => {
   }
 }))
 
-getUpAndDownVotes = async (result) => {
+const getUpAndDownVotes = async (result) => {
   const upvotes = await prisma.vote.groupBy({
     by: ['post_id'],
     where: {
@@ -161,7 +157,7 @@ getUpAndDownVotes = async (result) => {
     },
     _count: {
       post_id: true
-    },
+    }
   })
 
   const downvotes = await prisma.vote.groupBy({
@@ -171,17 +167,19 @@ getUpAndDownVotes = async (result) => {
     },
     _count: {
       post_id: true
-    },
+    }
   })
 
-  result.map((idea) => {
+  // eslint-disable-next-line array-callback-return
+  result.map(idea => {
     idea.upvotes = upvotes.find((upvote) => upvote.post_id === idea.id)?._count?.post_id ?? 0
   })
 
+  // eslint-disable-next-line array-callback-return
   result.map((idea) => {
     idea.downvotes = downvotes.find((downvote) => downvote.post_id === idea.id)?._count?.post_id ?? 0
   })
-  return result;
+  return result
 }
 
 router.post('/create', auth, use(async (req, res) => {
