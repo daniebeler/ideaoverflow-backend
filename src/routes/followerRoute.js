@@ -4,6 +4,7 @@ const database = require('../database')
 const { auth } = require('../middleware/userAuth')
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
+const helper = require('../helper')
 
 const use = fn => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next)
@@ -17,7 +18,8 @@ router.post('/follow', auth, use(async (req, res) => {
       followee_id: req.body.followeeID
     }
   })
-  return res.send({ status: 200 })
+
+  return helper.resSend(res, { status: 200 })
 }
 ))
 
@@ -30,7 +32,8 @@ router.post('/unfollow', auth, async (req, res) => {
       followee_id: req.body.followeeID
     }
   })
-  return res.send({ status: 200 })
+
+  return helper.resSend(res, { status: 200 })
 })
 
 router.post('/checkfollow', async (req, res) => {
@@ -42,9 +45,9 @@ router.post('/checkfollow', async (req, res) => {
     0,
     (result, err) => {
       if (err) {
-        return res.status(500).json({ err })
+        return helper.resSend(res, null, 'Error', 'Unknown error')
       } else {
-        return res.json({ following: result }).send()
+        return helper.resSend(res, { following: result })
       }
     })
 })
@@ -57,9 +60,9 @@ router.get('/followersbyusername/:username', (req, res) => {
     [req.params.username],
     (result, err) => {
       if (err) {
-        return res.status(500).json({ err })
+        return helper.resSend(res, null, 'Error', 'Unknown error')
       } else {
-        return res.send(result)
+        return helper.resSend(res, result)
       }
     })
 })
@@ -72,9 +75,9 @@ router.get('/followeesbyusername/:username', (req, res) => {
     [req.params.username],
     (result, err) => {
       if (err) {
-        return res.status(500).json({ err })
+        return helper.resSend(res, null, 'Error', 'Unknown error')
       } else {
-        return res.send(result)
+        return helper.resSend(res, result)
       }
     })
 })
