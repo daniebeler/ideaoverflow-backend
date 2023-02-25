@@ -3,7 +3,7 @@ const mariadb = require('mariadb/callback')
 const pool = mariadb.createPool({
   host: '127.0.0.1',
   user: 'root',
-  password: '',
+  password: 'Aut-1251',
   database: 'ideaoverflow',
   connectionLimit: 100,
   charset: 'utf8mb4',
