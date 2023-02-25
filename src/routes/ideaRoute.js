@@ -80,7 +80,6 @@ router.get('/byid/:id', optionalAuth, use(async (req, res) => {
 router.get('/byusername/:username', use(async (req, res) => {
   // #swagger.tags = ['Ideas']
 
-  console.log(req.query)
   const query = helper.convertQuery(req.query)
   let result = await prisma.post.findMany({
     skip: query.skip ?? 0,

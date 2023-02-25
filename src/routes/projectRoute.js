@@ -34,7 +34,6 @@ router.get('/byid/:id', async (req, res) => {
       }
     }
   })
-  console.log(result)
 
   if (!result) {
     return helper.resSend(res, null, 'Error', 'Unknown error')
@@ -70,49 +69,6 @@ router.post('/create', auth, async (req, res) => {
   } else {
     return helper.resSend(res, result)
   }
-
-  /* database.getConnection((_err, con) => {
-    con.query(`
-    INSERT INTO project (fk_user_id, title, short_description, logo, body, website, release_date)
-    VALUES (
-      ${con.escape(req.body.owner_id)},
-      ${con.escape(req.body.title)},
-      ${con.escape(req.body.short_description)},
-      ${con.escape(req.body.logo)},
-      ${con.escape(req.body.body)},
-      ${con.escape(req.body.website)},
-      ${con.escape(req.body.release_date)})
-    `, (err, fief) => {
-      if (err) {
-        con.release()
-        console.log(err)
-        return res.status(500).json({ err })
-      } else {
-        if (req.body.screenshots.length) {
-          const ins = []
-          req.body.screenshots.forEach((screenshot, index) => {
-            ins.push([fief.insertId, screenshot, index])
-          })
-
-          con.query(`
-        INSERT INTO screenshot (fk_project_id, url, sorting_index)
-        VALUES ?
-
-        `, [ins], (err) => {
-            con.release()
-            if (err) {
-              console.log(err)
-              return res.status(500).json({ err })
-            } else {
-              return res.status(200).json({ status: 200, header: 'Nice!', message: 'Your project is now online!', id: fief.insertId })
-            }
-          })
-        } else {
-          return res.status(200).json({ status: 200, header: 'Nice!', message: 'Your project is now online!', id: fief.insertId })
-        }
-      }
-    })
-  }) */
 })
 
 router.post('/update', auth, async (req, res) => {

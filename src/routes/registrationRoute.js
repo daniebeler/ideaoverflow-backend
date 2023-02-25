@@ -76,8 +76,6 @@ router.post('/login', use(async (req, res) => {
       }
     })
 
-    console.log(foundUser)
-
     if (!foundUser) {
       return helper.resSend(res, null, 'Error', 'Wrong email or password')
     }

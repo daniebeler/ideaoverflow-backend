@@ -53,7 +53,7 @@ router.post('/checkfollow', async (req, res) => {
     })
 })
 
-router.get('/followersbyusername/:id', async (req, res) => {
+router.get('/followersbyuserid/:id', use(async (req, res) => {
   // #swagger.tags = ['Followers']
 
   const result = await prisma.follower.findMany({
@@ -61,12 +61,10 @@ router.get('/followersbyusername/:id', async (req, res) => {
       followee_id: parseInt(req.params.id)
     },
     include: {
-      user: {
+      user_follower_follower_idTouser: {
         select: {
           id: true,
           username: true,
-          firstname: true,
-          lastname: true,
           profileimage: true,
           color: true
         }
@@ -74,37 +72,51 @@ router.get('/followersbyusername/:id', async (req, res) => {
     }
   })
 
+  result.forEach(function (obj) {
+    obj.user = obj.user_follower_follower_idTouser
+    delete obj.user_follower_follower_idTouser
+    delete obj.followee_id
+    delete obj.follower_id
+  })
+
   if (!result) {
     return helper.resSend(res, null, 'Error', 'Unknown error')
   } else {
     return helper.resSend(res, result)
   }
+}))
 
-  /* database.dbQuery(
-    'select u.* from follower f inner join user u on u.id = f.follower_id where f.followee_id = (select id from user where username = ?)',
-    [req.params.username],
-    (result, err) => {
-      if (err) {
-        return helper.resSend(res, null, 'Error', 'Unknown error')
-      } else {
-        return helper.resSend(res, result)
-      }
-    }) */
-})
-
-router.get('/followeesbyusername/:username', (req, res) => {
+router.get('/followeesbyuserid/:id', use(async (req, res) => {
   // #swagger.tags = ['Followers']
 
-  database.dbQuery(
-    'select u.* from follower f inner join user u on u.id = f.followee_id where f.follower_id = (select id from user where username = ?)',
-    [req.params.username],
-    (result, err) => {
-      if (err) {
-        return helper.resSend(res, null, 'Error', 'Unknown error')
-      } else {
-        return helper.resSend(res, result)
+  const result = await prisma.follower.findMany({
+    where: {
+      follower_id: parseInt(req.params.id)
+    },
+    include: {
+      user_follower_followee_idTouser: {
+        select: {
+          id: true,
+          username: true,
+          profileimage: true,
+          color: true
+        }
       }
-    })
-})
+    }
+  })
+
+  result.forEach(function (obj) {
+    obj.user = obj.user_follower_followee_idTouser
+    delete obj.user_follower_followee_idTouser
+    delete obj.followee_id
+    delete obj.follower_id
+  })
+
+  if (!result) {
+    return helper.resSend(res, null, 'Error', 'Unknown error')
+  } else {
+    return helper.resSend(res, result)
+  }
+}))
 
 module.exports = router
