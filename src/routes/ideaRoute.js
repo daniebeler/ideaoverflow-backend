@@ -86,7 +86,7 @@ router.get('/byusername/:username', use(async (req, res) => {
 
   console.log(req.query)
   const query = helper.convertQuery(req.query)
-  const result = await prisma.post.findMany({
+  let result = await prisma.post.findMany({
     skip: query.skip ?? 0,
     take: query.take ?? 100,
     orderBy: {
@@ -111,7 +111,7 @@ router.get('/byusername/:username', use(async (req, res) => {
     }
   })
 
-  console.log(result.length)
+  result = await getUpAndDownVotes(result)
 
   if (result) {
     return helper.resSend(res, result)
@@ -124,7 +124,7 @@ router.get('/all', use(async (req, res) => {
   // #swagger.tags = ['Ideas']
 
   const query = helper.convertQuery(req.query)
-  const result = await prisma.post.findMany({
+  let result = await prisma.post.findMany({
     skip: query.skip ?? 0,
     take: query.take ?? 100,
     orderBy: {
@@ -144,12 +144,45 @@ router.get('/all', use(async (req, res) => {
     }
   })
 
+  result = await getUpAndDownVotes(result)
+
   if (result) {
     return helper.resSend(res, result)
   } else {
     return res.send({ status: 204 })
   }
 }))
+
+getUpAndDownVotes = async (result) => {
+  const upvotes = await prisma.vote.groupBy({
+    by: ['post_id'],
+    where: {
+      value: 1
+    },
+    _count: {
+      post_id: true
+    },
+  })
+
+  const downvotes = await prisma.vote.groupBy({
+    by: ['post_id'],
+    where: {
+      value: -1
+    },
+    _count: {
+      post_id: true
+    },
+  })
+
+  result.map((idea) => {
+    idea.upvotes = upvotes.find((upvote) => upvote.post_id === idea.id)?._count?.post_id ?? 0
+  })
+
+  result.map((idea) => {
+    idea.downvotes = downvotes.find((downvote) => downvote.post_id === idea.id)?._count?.post_id ?? 0
+  })
+  return result;
+}
 
 router.post('/create', auth, use(async (req, res) => {
   // #swagger.tags = ['Ideas']
