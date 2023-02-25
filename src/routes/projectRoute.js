@@ -9,53 +9,69 @@ const helper = require('../helper')
 const use = fn => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next)
 
-router.get('/byid/:id', (req, res) => {
+router.get('/byid/:id', async (req, res) => {
   // #swagger.tags = ['Projects']
 
-  database.getConnection((_err, con) => {
-    con.query(`
-      SELECT p.*, u.profileimage, u.username
-      FROM project p 
-      INNER JOIN user u ON p.fk_user_id = u.id
-      WHERE p.id = ${con.escape(req.params.id)}
-     `, (err, user) => {
-      if (err) {
-        con.release()
-        return res.status(500).json({ err })
-      } else {
-        con.query(`
-      SELECT s.id, s.url
-      FROM project p 
-      left join screenshot s on p.id = s.fk_project_id
-      WHERE p.id = ${user[0].id}
-     `, (err, screenshots) => {
-          con.release()
-          if (err) {
-            return res.status(500).json({ err })
-          } else {
-            if (user[0]) {
-              const completeResult = user[0]
-              completeResult.screenshots = []
-              screenshots.forEach(element => {
-                if (element.url) {
-                  completeResult.screenshots.push(element.url)
-                }
-              })
-              return res.send(completeResult)
-            } else {
-              return res.send({ status: 204 })
-            }
-          }
-        })
+  const result = await prisma.project.findUnique({
+    where: {
+      id: parseInt(req.params.id)
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          firstname: true,
+          lastname: true,
+          profileimage: true,
+          color: true
+        }
+      },
+      screenshot: {
+        select: {
+          url: true
+        }
       }
-    })
+    }
   })
+  console.log(result)
+
+  if (!result) {
+    return helper.resSend(res, null, 'Error', 'Unknown error')
+  } else {
+    return helper.resSend(res, result)
+  }
 })
 
 router.post('/create', auth, async (req, res) => {
   // #swagger.tags = ['Projects']
 
-  database.getConnection((_err, con) => {
+  const result = await prisma.project.create({
+    data: {
+      fk_user_id: req.user.id,
+      title: req.body.title,
+      short_description: req.body.short_description,
+      logo: req.body.logo,
+      body: req.body.body,
+      website: req.body.website,
+      release_date: req.body.release_date
+    }
+  })
+
+  await prisma.screenshot.createMany({
+    data: req.body.screenshots.map(screenshot => ({
+      fk_project_id: result.id,
+      url: screenshot
+    }))
+  })
+
+  if (!result) {
+    return helper.resSend(res, null, 'Error', 'Unknown error')
+  } else {
+    return helper.resSend(res, result)
+  }
+
+  /* database.getConnection((_err, con) => {
     con.query(`
     INSERT INTO project (fk_user_id, title, short_description, logo, body, website, release_date)
     VALUES (
@@ -81,7 +97,7 @@ router.post('/create', auth, async (req, res) => {
           con.query(`
         INSERT INTO screenshot (fk_project_id, url, sorting_index)
         VALUES ?
-          
+
         `, [ins], (err) => {
             con.release()
             if (err) {
@@ -96,7 +112,7 @@ router.post('/create', auth, async (req, res) => {
         }
       }
     })
-  })
+  }) */
 })
 
 router.post('/update', auth, async (req, res) => {

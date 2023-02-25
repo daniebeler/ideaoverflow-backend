@@ -36,6 +36,7 @@ router.post('/unfollow', auth, async (req, res) => {
   return helper.resSend(res, { status: 200 })
 })
 
+// löschen
 router.post('/checkfollow', async (req, res) => {
   // #swagger.tags = ['Followers']
 
@@ -52,10 +53,34 @@ router.post('/checkfollow', async (req, res) => {
     })
 })
 
-router.get('/followersbyusername/:username', (req, res) => {
+router.get('/followersbyusername/:id', async (req, res) => {
   // #swagger.tags = ['Followers']
 
-  database.dbQuery(
+  const result = await prisma.follower.findMany({
+    where: {
+      followee_id: parseInt(req.params.id)
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          firstname: true,
+          lastname: true,
+          profileimage: true,
+          color: true
+        }
+      }
+    }
+  })
+
+  if (!result) {
+    return helper.resSend(res, null, 'Error', 'Unknown error')
+  } else {
+    return helper.resSend(res, result)
+  }
+
+  /* database.dbQuery(
     'select u.* from follower f inner join user u on u.id = f.follower_id where f.followee_id = (select id from user where username = ?)',
     [req.params.username],
     (result, err) => {
@@ -64,7 +89,7 @@ router.get('/followersbyusername/:username', (req, res) => {
       } else {
         return helper.resSend(res, result)
       }
-    })
+    }) */
 })
 
 router.get('/followeesbyusername/:username', (req, res) => {
