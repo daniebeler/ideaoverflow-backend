@@ -65,8 +65,11 @@ router.get('/followersbyuserid/:id', use(async (req, res) => {
         select: {
           id: true,
           username: true,
+          firstname: true,
+          lastname: true,
           profileimage: true,
-          color: true
+          color: true,
+          bio: true
         }
       }
     }

@@ -186,13 +186,13 @@ router.post('/create', auth, use(async (req, res) => {
 
   await prisma.post.create({
     data: {
-      fk_owner_user_id: req.body.userID,
+      fk_owner_user_id: req.user.id,
       title: req.body.header,
       body: req.body.body
     }
   })
 
-  return res.send({ status: 200, header: 'Nice!', message: 'Your idea is now online!' })
+  return helper.resSend(res)
 }))
 
 router.post('/update', auth, async (req, res) => {
@@ -200,7 +200,7 @@ router.post('/update', auth, async (req, res) => {
 
   await prisma.post.update({
     where: {
-      id: req.body.postId
+      id: parseInt(req.body.ideaId)
     },
     data: {
       title: req.body.title,
@@ -208,7 +208,7 @@ router.post('/update', auth, async (req, res) => {
     }
   })
 
-  return res.send({ status: 200, header: 'Nice!', message: 'Your idea has been updated!' })
+  return helper.resSend(res)
 })
 
 router.get('/numberoftotalideas', async (req, res) => {
@@ -285,9 +285,9 @@ router.get('/checkifideabelongstouser/:postid', auth, use(async (req, res) => {
   })
 
   if (result) {
-    return res.send({ accessgranted: true })
+    return helper.resSend(res, { accessgranted: true })
   } else {
-    return res.send({ accessgranted: false })
+    return helper.resSend(res, { accessgranted: false })
   }
 }))
 
