@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const database = require('../database')
-const { auth } = require('../middleware/userAuth')
+const { auth, optionalAuth } = require('../middleware/userAuth')
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
 const helper = require('../helper')
@@ -53,7 +53,7 @@ router.post('/checkfollow', async (req, res) => {
     })
 })
 
-router.get('/followersbyuserid/:id', use(async (req, res) => {
+router.get('/followersbyuserid/:id', optionalAuth, use(async (req, res) => {
   // #swagger.tags = ['Followers']
 
   let result = await prisma.follower.findMany({
@@ -89,6 +89,11 @@ router.get('/followersbyuserid/:id', use(async (req, res) => {
   result = await getNumberOfIdeas(result, followersIds)
   result = await getNumberOfLikes(result, followersIds)
 
+  if (req.user) {
+    result = await getFollowingStatus(result, req.user.id, followersIds)
+  }
+  console.log(result)
+
   if (!result) {
     return helper.resSend(res, null, 'Error', 'Unknown error')
   } else {
@@ -96,7 +101,7 @@ router.get('/followersbyuserid/:id', use(async (req, res) => {
   }
 }))
 
-router.get('/followeesbyuserid/:id', use(async (req, res) => {
+router.get('/followeesbyuserid/:id', optionalAuth, use(async (req, res) => {
   // #swagger.tags = ['Followers']
 
   let result = await prisma.follower.findMany({
@@ -132,23 +137,11 @@ router.get('/followeesbyuserid/:id', use(async (req, res) => {
   result = await getNumberOfIdeas(result, followersIds)
   result = await getNumberOfLikes(result, followersIds)
 
-  const numberOfFollowers = await prisma.follower.groupBy({
-    by: ['followee_id'],
-    where: {
-      followee_id: { in: followersIds }
-    },
-    _count: {
-      follower_id: true
-    }
-  })
+  if (req.user) {
+    result = await getFollowingStatus(result, req.user.id, followersIds)
+  }
 
-  result.forEach(function (obj) {
-    numberOfFollowers.forEach(function (obj2) {
-      if (obj.user.id === obj2.followee_id) {
-        obj.user.numberOfFollowers = obj2._count.follower_id
-      }
-    })
-  })
+  console.log(result)
 
   if (!result) {
     return helper.resSend(res, null, 'Error', 'Unknown error')
@@ -240,6 +233,27 @@ async function getNumberOfLikes(result, followersIds) {
     numberOfLikes.forEach(function (obj2) {
       if (obj.user.id === obj2.ownerId) {
         obj.user.numberOfLikes = obj2.numberOfLikes
+      }
+    })
+  })
+  return result
+}
+
+async function getFollowingStatus(result, userId, followersIds) {
+  const followingStatus = await prisma.follower.findMany({
+    where: {
+      followee_id: { in: followersIds },
+      follower_id: userId
+    },
+    select: {
+      followee_id: true
+    }
+  })
+  console.log(followingStatus)
+  result.forEach(function (obj) {
+    followingStatus.forEach(function (obj2) {
+      if (obj.user.id === obj2.followee_id) {
+        obj.user.following = true
       }
     })
   })
