@@ -89,8 +89,6 @@ router.get('/followersbyuserid/:id', use(async (req, res) => {
   result = await getNumberOfIdeas(result, followersIds)
   result = await getNumberOfLikes(result, followersIds)
 
-  console.log(result)
-
   if (!result) {
     return helper.resSend(res, null, 'Error', 'Unknown error')
   } else {
@@ -151,8 +149,6 @@ router.get('/followeesbyuserid/:id', use(async (req, res) => {
       }
     })
   })
-  console.log(followersIds)
-  console.log(result)
 
   if (!result) {
     return helper.resSend(res, null, 'Error', 'Unknown error')
@@ -192,7 +188,6 @@ async function getNumberOfIdeas(result, followersIds) {
       id: true
     }
   })
-  console.log(numberOfIdeas)
 
   result.forEach(function (obj) {
     numberOfIdeas.forEach(function (obj2) {
@@ -201,7 +196,6 @@ async function getNumberOfIdeas(result, followersIds) {
       }
     })
   })
-  console.log(result)
   return result
 }
 
@@ -218,7 +212,6 @@ async function getNumberOfLikes(result, followersIds) {
       value: true
     }
   })
-  console.log(numberOfLikesPerPost)
 
   const postOwners = await prisma.post.findMany({
     where: {
@@ -242,8 +235,6 @@ async function getNumberOfLikes(result, followersIds) {
       numberOfLikes.find(e => e.ownerId === postOwners[i].fk_owner_user_id).numberOfLikes += numberOfLikesPerPost.find(e => e.post_id === postOwners[i].id)?._sum.value
     }
   }
-
-  console.log(numberOfLikes)
 
   result.forEach(function (obj) {
     numberOfLikes.forEach(function (obj2) {
