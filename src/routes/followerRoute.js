@@ -56,7 +56,7 @@ router.post('/checkfollow', async (req, res) => {
 router.get('/followersbyuserid/:id', use(async (req, res) => {
   // #swagger.tags = ['Followers']
 
-  const result = await prisma.follower.findMany({
+  let result = await prisma.follower.findMany({
     where: {
       followee_id: parseInt(req.params.id)
     },
@@ -75,12 +75,21 @@ router.get('/followersbyuserid/:id', use(async (req, res) => {
     }
   })
 
+  const followersIds = []
+
   result.forEach(function (obj) {
+    followersIds.push(obj.follower_id)
     obj.user = obj.user_follower_follower_idTouser
     delete obj.user_follower_follower_idTouser
     delete obj.followee_id
     delete obj.follower_id
   })
+
+  result = await getNumberOfFollowers(result, followersIds)
+  result = await getNumberOfIdeas(result, followersIds)
+  result = await getNumberOfLikes(result, followersIds)
+
+  console.log(result)
 
   if (!result) {
     return helper.resSend(res, null, 'Error', 'Unknown error')
@@ -92,7 +101,7 @@ router.get('/followersbyuserid/:id', use(async (req, res) => {
 router.get('/followeesbyuserid/:id', use(async (req, res) => {
   // #swagger.tags = ['Followers']
 
-  const result = await prisma.follower.findMany({
+  let result = await prisma.follower.findMany({
     where: {
       follower_id: parseInt(req.params.id)
     },
@@ -101,19 +110,49 @@ router.get('/followeesbyuserid/:id', use(async (req, res) => {
         select: {
           id: true,
           username: true,
+          firstname: true,
+          lastname: true,
           profileimage: true,
-          color: true
+          color: true,
+          bio: true
         }
       }
     }
   })
 
+  const followersIds = []
+
   result.forEach(function (obj) {
+    followersIds.push(obj.followee_id)
     obj.user = obj.user_follower_followee_idTouser
     delete obj.user_follower_followee_idTouser
     delete obj.followee_id
     delete obj.follower_id
   })
+
+  result = await getNumberOfFollowers(result, followersIds)
+  result = await getNumberOfIdeas(result, followersIds)
+  result = await getNumberOfLikes(result, followersIds)
+
+  const numberOfFollowers = await prisma.follower.groupBy({
+    by: ['followee_id'],
+    where: {
+      followee_id: { in: followersIds }
+    },
+    _count: {
+      follower_id: true
+    }
+  })
+
+  result.forEach(function (obj) {
+    numberOfFollowers.forEach(function (obj2) {
+      if (obj.user.id === obj2.followee_id) {
+        obj.user.numberOfFollowers = obj2._count.follower_id
+      }
+    })
+  })
+  console.log(followersIds)
+  console.log(result)
 
   if (!result) {
     return helper.resSend(res, null, 'Error', 'Unknown error')
@@ -121,5 +160,99 @@ router.get('/followeesbyuserid/:id', use(async (req, res) => {
     return helper.resSend(res, result)
   }
 }))
+
+async function getNumberOfFollowers(result, followersIds) {
+  const numberOfFollowers = await prisma.follower.groupBy({
+    by: ['followee_id'],
+    where: {
+      followee_id: { in: followersIds }
+    },
+    _count: {
+      follower_id: true
+    }
+  })
+
+  result.forEach(function (obj) {
+    numberOfFollowers.forEach(function (obj2) {
+      if (obj.user.id === obj2.followee_id) {
+        obj.user.numberOfFollowers = obj2._count.follower_id
+      }
+    })
+  })
+  return result
+}
+
+async function getNumberOfIdeas(result, followersIds) {
+  const numberOfIdeas = await prisma.post.groupBy({
+    by: ['fk_owner_user_id'],
+    where: {
+      fk_owner_user_id: { in: followersIds }
+    },
+    _count: {
+      id: true
+    }
+  })
+  console.log(numberOfIdeas)
+
+  result.forEach(function (obj) {
+    numberOfIdeas.forEach(function (obj2) {
+      if (obj.user.id === obj2.fk_owner_user_id) {
+        obj.user.numberOfPosts = obj2._count.id
+      }
+    })
+  })
+  console.log(result)
+  return result
+}
+
+async function getNumberOfLikes(result, followersIds) {
+  const numberOfLikesPerPost = await prisma.vote.groupBy({
+    by: ['post_id'],
+    where: {
+      post: {
+        fk_owner_user_id: { in: followersIds }
+      },
+      value: 1
+    },
+    _sum: {
+      value: true
+    }
+  })
+  console.log(numberOfLikesPerPost)
+
+  const postOwners = await prisma.post.findMany({
+    where: {
+      fk_owner_user_id: { in: followersIds }
+    },
+    select: {
+      id: true,
+      fk_owner_user_id: true
+    }
+  })
+
+  const numberOfLikes = []
+
+  for (let i = 0; i < postOwners.length; i++) {
+    if (numberOfLikes.filter(e => e.ownerId === postOwners[i].fk_owner_user_id).length === 0) {
+      numberOfLikes.push({
+        ownerId: postOwners[i].fk_owner_user_id,
+        numberOfLikes: numberOfLikesPerPost.find(e => e.post_id === postOwners[i].id)._sum.value
+      })
+    } else {
+      numberOfLikes.find(e => e.ownerId === postOwners[i].fk_owner_user_id).numberOfLikes += numberOfLikesPerPost.find(e => e.post_id === postOwners[i].id)?._sum.value
+    }
+  }
+
+  console.log(numberOfLikes)
+
+  result.forEach(function (obj) {
+    numberOfLikes.forEach(function (obj2) {
+      if (obj.user.id === obj2.ownerId) {
+        obj.user.numberOfLikes = obj2.numberOfLikes
+      }
+    })
+  })
+  return result
+}
 
 module.exports = router
