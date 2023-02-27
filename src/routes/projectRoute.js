@@ -1,6 +1,5 @@
 const express = require('express')
 const router = express.Router()
-const database = require('../database')
 const { auth } = require('../middleware/userAuth')
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
@@ -80,63 +79,58 @@ router.post('/update', auth, async (req, res) => {
     req.body.website = req.body.website.slice(8)
   }
 
-  database.getConnection((_err, con) => {
-    con.query(`
-    UPDATE project
-    SET 
-    title = ${con.escape(req.body.title)},
-    body = ${con.escape(req.body.body)},
-    start_date = ${con.escape(req.body.start_date)},
-    release_date = ${con.escape(req.body.release_date)},
-    logo = ${con.escape(req.body.logo)},
-    short_description = ${con.escape(req.body.short_description)},
-    website = ${con.escape(req.body.website)}
-    WHERE id = ${con.escape(req.body.id)}`, (err) => {
-      con.release()
-      if (err) {
-        return res.status(500).json({ err })
-      } else {
-        return res.json({ status: 200, header: 'Nice!', message: 'Your project has been updated!', id: -1 }).send()
-      }
-    })
+  const result = await prisma.project.update({
+    where: {
+      id: parseInt(req.body.id)
+    },
+    data: {
+      title: req.body.title,
+      short_description: req.body.short_description,
+      logo: req.body.logo,
+      body: req.body.body,
+      website: req.body.website,
+      release_date: req.body.release_date,
+      start_date: req.body.start_date
+    }
   })
+
+  if (!result) {
+    return helper.resSend(res, null, 'Error', 'Unknown error')
+  } else {
+    return helper.resSend(res)
+  }
 })
 
-router.post('/projects', (req, res) => {
+router.get('/all', use(async (req, res) => {
   // #swagger.tags = ['Projects']
 
-  let usernameFilter = ''
-  let order = 'ORDER BY coalesce(p.release_date, p.creation_date) DESC'
-
-  if (req.body.username) {
-    usernameFilter = 'WHERE u.username = "' + req.body.username + '"'
-  }
-
-  if (req.body.sortingCriteria === 'newest') {
-    order = 'ORDER BY coalesce(p.release_date, p.creation_date) DESC'
-  } else if (req.body.sortingCriteria === 'oldest') {
-    order = 'ORDER BY coalesce(p.release_date, p.creation_date) ASC'
-  }
-
-  database.getConnection((_err, con) => {
-    con.query(`
-      SELECT p.*, u.profileimage, u.color, u.username
-      FROM project p
-      INNER JOIN user u ON p.fk_user_id = u.id
-      ${usernameFilter}
-      GROUP BY p.id 
-      ${order} 
-      limit ${req.body.take} 
-      offset ${req.body.skip}`, (err, result) => {
-      con.release()
-      if (err) {
-        return res.status(500).json({ err })
-      } else {
-        return res.send(result)
+  const query = helper.convertQuery(req.query)
+  const result = await prisma.project.findMany({
+    skip: query.skip ?? 0,
+    take: query.take ?? 100,
+    orderBy: {
+      creation_date: query.orderDirection
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          firstname: true,
+          lastname: true,
+          profileimage: true,
+          color: true
+        }
       }
-    })
+    }
   })
-})
+
+  if (result) {
+    return helper.resSend(res, result)
+  } else {
+    return res.send({ status: 204 })
+  }
+}))
 
 router.get('/numberoftotalprojects', use(async (req, res) => {
   // #swagger.tags = ['Projects']

@@ -1,6 +1,5 @@
 const express = require('express')
 const router = express.Router()
-const database = require('../database')
 const { auth, optionalAuth } = require('../middleware/userAuth')
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
@@ -34,23 +33,6 @@ router.post('/unfollow', auth, async (req, res) => {
   })
 
   return helper.resSend(res, { status: 200 })
-})
-
-// löschen
-router.post('/checkfollow', async (req, res) => {
-  // #swagger.tags = ['Followers']
-
-  database.dbGetSingleValue(
-    'SELECT EXISTS(SELECT * FROM follower WHERE followee_id = ? AND follower_id = ?) as val',
-    [req.body.followeeID, req.body.followerID],
-    0,
-    (result, err) => {
-      if (err) {
-        return helper.resSend(res, null, 'Error', 'Unknown error')
-      } else {
-        return helper.resSend(res, { following: result })
-      }
-    })
 })
 
 router.get('/followersbyuserid/:id', optionalAuth, use(async (req, res) => {

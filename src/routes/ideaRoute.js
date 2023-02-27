@@ -215,7 +215,7 @@ router.get('/numberoftotalideas', async (req, res) => {
   // #swagger.tags = ['Ideas']
 
   const numberoftotalideas = await prisma.post.count()
-  return res.send({ numberoftotalideas })
+  return helper.resSend(res, { numberoftotalideas })
 })
 
 router.post('/vote', auth, use(async (req, res) => {
