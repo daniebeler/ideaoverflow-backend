@@ -74,7 +74,6 @@ router.get('/followersbyuserid/:id', optionalAuth, use(async (req, res) => {
   if (req.user) {
     result = await getFollowingStatus(result, req.user.id, followersIds)
   }
-  console.log(result)
 
   if (!result) {
     return helper.resSend(res, null, 'Error', 'Unknown error')
@@ -122,8 +121,6 @@ router.get('/followeesbyuserid/:id', optionalAuth, use(async (req, res) => {
   if (req.user) {
     result = await getFollowingStatus(result, req.user.id, followersIds)
   }
-
-  console.log(result)
 
   if (!result) {
     return helper.resSend(res, null, 'Error', 'Unknown error')
@@ -231,7 +228,6 @@ async function getFollowingStatus(result, userId, followersIds) {
       followee_id: true
     }
   })
-  console.log(followingStatus)
   result.forEach(function (obj) {
     followingStatus.forEach(function (obj2) {
       if (obj.user.id === obj2.followee_id) {

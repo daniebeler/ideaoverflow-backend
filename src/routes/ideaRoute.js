@@ -115,6 +115,55 @@ router.get('/byusername/:username', use(async (req, res) => {
   }
 }))
 
+router.get('/saved', auth, use(async (req, res) => {
+  // #swagger.tags = ['Ideas']
+
+  const query = helper.convertQuery(req.query)
+  let result = await prisma.user_saves_post.findMany({
+    skip: query.skip ?? 0,
+    take: query.take ?? 100,
+    orderBy: {
+      post: {
+        creation_date: query.orderDirection
+      }
+    },
+    where: {
+      user_id: req.user.id
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          firstname: true,
+          lastname: true,
+          profileimage: true,
+          color: true
+        }
+      },
+      post: true
+    }
+  })
+
+  result = await getUpAndDownVotes(result)
+
+  result.forEach(function (element) {
+    element.id = element.post.id
+    element.title = element.post.title
+    element.body = element.post.body
+    delete element.post
+    delete element.user_id
+    delete element.post_id
+    delete element.savedAt
+  })
+
+  if (result) {
+    return helper.resSend(res, result)
+  } else {
+    return res.send({ status: 204 })
+  }
+}))
+
 router.get('/all', use(async (req, res) => {
   // #swagger.tags = ['Ideas']
 
