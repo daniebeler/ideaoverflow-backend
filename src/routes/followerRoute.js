@@ -22,7 +22,7 @@ router.post('/follow', auth, use(async (req, res) => {
 }
 ))
 
-router.post('/unfollow', auth, async (req, res) => {
+router.post('/unfollow', auth, use(async (req, res) => {
   // #swagger.tags = ['Followers']
 
   await prisma.follower.deleteMany({
@@ -33,7 +33,7 @@ router.post('/unfollow', auth, async (req, res) => {
   })
 
   return helper.resSend(res, { status: 200 })
-})
+}))
 
 router.get('/followersbyuserid/:id', optionalAuth, use(async (req, res) => {
   // #swagger.tags = ['Followers']

@@ -181,7 +181,7 @@ router.get('/checkresetcode/:code', use(async (req, res) => {
   }
 }))
 
-router.post('/setpassword', async (req, res) => {
+router.post('/setpassword', use(async (req, res) => {
   // #swagger.tags = ['Authentication']
 
   if (!req.body.pw1 || !req.body.pw2) {
@@ -218,6 +218,6 @@ router.post('/setpassword', async (req, res) => {
       return res.json({ header: 'Congrats', message: 'Your password has been changed', stay: false })
     })
   })
-})
+}))
 
 module.exports = router
