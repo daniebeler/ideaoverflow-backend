@@ -45,6 +45,73 @@ router.get('/byid/:id', optionalAuth, use(async (req, res) => {
   }
 }))
 
+router.get('/all', optionalAuth, use(async (req, res) => {
+  // #swagger.tags = ['Projects']
+
+  const query = helper.convertQuery(req.query)
+  const result = await prisma.project.findMany({
+    skip: query.skip ?? 0,
+    take: query.take ?? 100,
+    orderBy: {
+      creation_date: query.orderDirection
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          firstname: true,
+          lastname: true,
+          profileimage: true,
+          color: true
+        }
+      }
+    }
+  })
+
+  if (result) {
+    return helper.resSend(res, result)
+  } else {
+    return helper.resSend(res, [])
+  }
+}))
+
+router.get('/byusername/:username', optionalAuth, use(async (req, res) => {
+  // #swagger.tags = ['Projects']
+
+  const query = helper.convertQuery(req.query)
+  const result = await prisma.project.findMany({
+    skip: query.skip ?? 0,
+    take: query.take ?? 100,
+    orderBy: {
+      creation_date: query.orderDirection
+    },
+    where: {
+      user: {
+        username: req.params.username
+      }
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          firstname: true,
+          lastname: true,
+          profileimage: true,
+          color: true
+        }
+      }
+    }
+  })
+
+  if (result) {
+    return helper.resSend(res, result)
+  } else {
+    return helper.resSend(res, [])
+  }
+}))
+
 router.post('/create', auth, use(async (req, res) => {
   // #swagger.tags = ['Projects']
 
@@ -102,37 +169,6 @@ router.post('/update', auth, use(async (req, res) => {
     return helper.resSend(res, null, 'Error', 'Unknown error')
   } else {
     return helper.resSend(res)
-  }
-}))
-
-router.get('/all', optionalAuth, use(async (req, res) => {
-  // #swagger.tags = ['Projects']
-
-  const query = helper.convertQuery(req.query)
-  const result = await prisma.project.findMany({
-    skip: query.skip ?? 0,
-    take: query.take ?? 100,
-    orderBy: {
-      creation_date: query.orderDirection
-    },
-    include: {
-      user: {
-        select: {
-          id: true,
-          username: true,
-          firstname: true,
-          lastname: true,
-          profileimage: true,
-          color: true
-        }
-      }
-    }
-  })
-
-  if (result) {
-    return helper.resSend(res, result)
-  } else {
-    return helper.resSend(res, [])
   }
 }))
 
