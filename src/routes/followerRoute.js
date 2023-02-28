@@ -11,8 +11,15 @@ const use = fn => (req, res, next) =>
 router.post('/follow', auth, use(async (req, res) => {
   // #swagger.tags = ['Followers']
 
-  await prisma.follower.create({
-    data: {
+  await prisma.follower.upsert({
+    where: {
+      followee_id_follower_id: {
+        follower_id: req.body.followerID,
+        followee_id: req.body.followeeID
+      }
+    },
+    update: {},
+    create: {
       follower_id: req.body.followerID,
       followee_id: req.body.followeeID
     }
