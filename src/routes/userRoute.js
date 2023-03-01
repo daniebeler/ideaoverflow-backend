@@ -146,29 +146,4 @@ router.get('/numberoftotalusers', use(async (_req, res) => {
   return helper.resSend(res, { numberoftotalusers: result })
 }))
 
-router.get('/numberofideasbyuser/:id', use(async (req, res) => {
-  // #swagger.tags = ['Users']
-
-  const userId = parseInt(req.params.id)
-  const result = await prisma.post.count({
-    where: {
-      fk_owner_user_id: userId
-    }
-  })
-
-  return helper.resSend(res, { numberofideas: result })
-}))
-
-router.get('/numberofprojectsbyuser/:id', use(async (req, res) => {
-  // #swagger.tags = ['Users']
-
-  const userId = parseInt(req.params.id)
-  const result = await prisma.project.count({
-    where: {
-      fk_user_id: userId
-    }
-  })
-  return helper.resSend(res, { numberofprojects: result })
-}))
-
 module.exports = router
