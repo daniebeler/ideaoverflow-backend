@@ -8,8 +8,6 @@ RUN npm install
 
 COPY . /app
 
-ENV DATABASE_URL ""
-
 RUN npx prisma generate
 
 EXPOSE 3003
