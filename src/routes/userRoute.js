@@ -5,6 +5,7 @@ const { auth } = require('../middleware/userAuth')
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
 const helper = require('../helper')
+const functions = require('../functions')
 
 const use = fn => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next)
@@ -16,6 +17,11 @@ router.get('/byid/:userid', use(async (req, res) => {
   const result = await prisma.user.findFirst({
     where: { id: userId }
   })
+
+  result.numberOfFollowers = await functions.getNumberOfFollowersByUserid(userId)
+  result.numberOfFollowees = await functions.getNumberOfFolloweesByUserid(userId)
+  result.numberOfPosts = await functions.getNumberOfIdeasByUserid(userId)
+  result.numberOfProjects = await functions.getNumberOfProjectsByUserid(userId)
 
   if (result) {
     return helper.resSend(res, result)
@@ -30,6 +36,13 @@ router.get('/byusername/:username', use(async (req, res) => {
   const result = await prisma.user.findFirst({
     where: { username: req.params.username }
   })
+
+  if (result?.id) {
+    result.numberOfFollowers = await functions.getNumberOfFollowersByUserid(result.id)
+    result.numberOfFollowees = await functions.getNumberOfFolloweesByUserid(result.id)
+    result.numberOfPosts = await functions.getNumberOfIdeasByUserid(result.id)
+    result.numberOfProjects = await functions.getNumberOfProjectsByUserid(result.id)
+  }
 
   if (result) {
     return helper.resSend(res, result)
