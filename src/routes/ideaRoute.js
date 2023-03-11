@@ -168,25 +168,63 @@ router.get('/all', optionalAuth, use(async (req, res) => {
   // #swagger.tags = ['Ideas']
 
   const query = helper.convertQuery(req.query)
-  let result = await prisma.post.findMany({
-    skip: query.skip ?? 0,
-    take: query.take ?? 100,
-    orderBy: {
-      creation_date: query.orderDirection
-    },
-    include: {
-      user: {
-        select: {
-          id: true,
-          username: true,
-          firstname: true,
-          lastname: true,
-          profileimage: true,
-          color: true
+  const sortBy = query.sort ?? 'date'
+
+  console.log('query', query)
+
+  let result
+
+  if (sortBy === 'date') {
+    result = await prisma.post.findMany({
+      skip: query.skip ?? 0,
+      take: query.take ?? 100,
+      orderBy: {
+        creation_date: query.orderDirection
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            firstname: true,
+            lastname: true,
+            profileimage: true,
+            color: true
+          }
         }
       }
-    }
-  })
+    })
+  } else if (sortBy === 'likes') {
+    console.log('likes')
+    result = await prisma.post.findMany({
+      skip: query.skip ?? 0,
+      take: query.take ?? 100,
+      where: {
+        vote: {
+          every: { value: 1 }
+        }
+      },
+      orderBy: {
+        vote: {
+          _count: 'desc'
+        }
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            firstname: true,
+            lastname: true,
+            profileimage: true,
+            color: true
+          }
+        }
+      }
+    })
+  }
+
+  console.log(result)
 
   if (req.user?.id) {
     // eslint-disable-next-line array-callback-return

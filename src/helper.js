@@ -50,6 +50,7 @@ module.exports = {
     obj.take = parseInt(query.take ?? 100)
     obj.userId = parseInt(query.user_id ?? -1)
     obj.orderDirection = query.reverse === 'true' ? 'asc' : 'desc'
+    obj.sort = query.sort
 
     return obj
   },
