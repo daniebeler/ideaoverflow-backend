@@ -224,8 +224,6 @@ router.get('/all', optionalAuth, use(async (req, res) => {
     })
   }
 
-  console.log(result)
-
   if (req.user?.id) {
     // eslint-disable-next-line array-callback-return
     result.map(idea => {

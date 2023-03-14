@@ -89,7 +89,6 @@ model user {
   twitter                             String?           @db.VarChar(100)
   instagram                           String?           @db.VarChar(100)
   country                             String?           @db.VarChar(100)
-  state                               String?           @db.VarChar(100)
   dribbble                            String?           @db.VarChar(100)
   linkedin                            String?           @db.VarChar(100)
   profileimage                        String            @default("https://i.imgur.com/pWHgnHA.jpg") @db.VarChar(50)
