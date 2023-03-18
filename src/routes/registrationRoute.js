@@ -13,9 +13,15 @@ router.post('/register', use(async (req, res) => {
   // #swagger.description = 'Registers a new user.'
 
   if (!req.body.email || !req.body.username || !req.body.password) {
-    return res.json({ header: 'Error', message: 'Empty fields!' })
-  } else if (!helper.testPasswordStrength(req.body.password)) {
-    return res.json({ header: 'Error', message: 'The password must be at least 6 characters long. There must be at least one letter and one number.' })
+    return helper.resSend(res, null, 'Error', 'Empty fields')
+  }
+
+  if (!helper.testPasswordStrength(req.body.password)) {
+    return helper.resSend(res, null, 'Error', 'The password must be at least 6 characters long. There must be at least one letter and one number.')
+  }
+
+  if (!helper.checkIfIsEmail(req.body.email)) {
+    return helper.resSend(res, null, 'Error', 'Invalid email')
   }
 
   const userCheck = await prisma.user.findFirst({
@@ -33,9 +39,9 @@ router.post('/register', use(async (req, res) => {
 
   if (userCheck) {
     if (userCheck.email === req.body.email) {
-      return res.json({ header: 'Error', message: 'This email is already used!' })
+      return helper.resSend(res, null, 'Error', 'This email is already used')
     } else {
-      return res.json({ header: 'Error', message: 'This username already used!' })
+      return helper.resSend(res, null, 'Error', 'This username is already used')
     }
   }
 
@@ -43,7 +49,7 @@ router.post('/register', use(async (req, res) => {
 
   bcrypt.genSalt(512, (_err, salt) => {
     bcrypt.hash(req.body.password, salt, async (_err, enc) => {
-      await prisma.user.create({
+      const newUser = await prisma.user.create({
         data: {
           email: req.body.email,
           username: req.body.username,
@@ -52,8 +58,12 @@ router.post('/register', use(async (req, res) => {
         }
       })
 
-      helper.sendMail(req.body.email, 'Email verification', 'Open this link to enable your account: https://ideaoverflow.xyz/verify/' + code)
-      return res.json({ status: 1, header: 'Congrats!', message: 'The user has been created. Please confirm your e-mail, it may have ended up in the spam folder. After that you can log in.' })
+      const usertoken = helper.createJWT(
+        newUser.id,
+        newUser.email,
+        newUser.username
+      )
+      helper.resSend(res, { token: usertoken })
     })
   })
 }))
@@ -64,34 +74,35 @@ router.post('/login', use(async (req, res) => {
 
   if (!req.body.email || !req.body.password) {
     return helper.resSend(res, null, 'Error', 'Empty fields')
-  } else {
-    const foundUser = await prisma.user.findFirst({
-      where: {
-        email: req.body.email
-      },
-      select: {
-        password: true,
-        id: true,
-        email: true
-      }
-    })
+  }
 
-    if (!foundUser) {
+  const foundUser = await prisma.user.findFirst({
+    where: {
+      email: req.body.email
+    },
+    select: {
+      password: true,
+      id: true,
+      email: true
+    }
+  })
+
+  if (!foundUser) {
+    return helper.resSend(res, null, 'Error', 'Wrong email or password')
+  }
+
+  bcrypt.compare(req.body.password, foundUser.password, async (err, isMatch) => {
+    if (err) {
+      return helper.resSend(res, null, 'Error', 'Unknown error')
+    }
+
+    if (!isMatch) {
       return helper.resSend(res, null, 'Error', 'Wrong email or password')
     }
 
-    bcrypt.compare(req.body.password, foundUser.password, async (err, isMatch) => {
-      if (err) {
-        return helper.resSend(res, null, 'Error', 'Unknown error')
-      }
-      if (!isMatch) {
-        return helper.resSend(res, null, 'Error', 'Wrong email or password')
-      } else {
-        const usertoken = helper.createJWT(foundUser.id, foundUser.email, foundUser.username)
-        return helper.resSend(res, { token: usertoken })
-      }
-    })
-  }
+    const usertoken = helper.createJWT(foundUser.id, foundUser.email, foundUser.username)
+    return helper.resSend(res, { token: usertoken })
+  })
 }))
 
 router.get('/verify/:code', use(async (req, res) => {

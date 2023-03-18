@@ -3,10 +3,15 @@ const mailer = require('nodemailer')
 const jwt = require('jsonwebtoken')
 
 const pwStrength = /^(?=.*[A-Za-z])(?=.*\d)[\S]{6,}$/ // mindestens 6 Stellen && eine Zahl && ein Buchstabe
+const email = /^\S+@\S+\.\S+$/
 
 module.exports = {
   testPasswordStrength: function (password) {
     return pwStrength.test(password)
+  },
+
+  checkIfIsEmail: function (str) {
+    return email.test(str)
   },
 
   createJWT: function (id, email, username) {
@@ -45,7 +50,7 @@ module.exports = {
   },
 
   convertQuery: function (query) {
-    const obj = { }
+    const obj = {}
     obj.skip = parseInt(query.skip ?? 0)
     obj.take = parseInt(query.take ?? 100)
     obj.userId = parseInt(query.user_id ?? -1)
