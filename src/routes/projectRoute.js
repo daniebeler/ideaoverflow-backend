@@ -39,9 +39,9 @@ router.get('/byid/:id', optionalAuth, use(async (req, res) => {
   }
 
   if (!result) {
-    return helper.resSend(res, null, 'Error', 'Unknown error')
+    return helper.returnError(res, 'Unknown error')
   } else {
-    return helper.resSend(res, result)
+    return helper.returnResult(res, result)
   }
 }))
 
@@ -70,9 +70,9 @@ router.get('/all', optionalAuth, use(async (req, res) => {
   })
 
   if (result) {
-    return helper.resSend(res, result)
+    return helper.returnResult(res, result)
   } else {
-    return helper.resSend(res, [])
+    return helper.returnResult(res, [])
   }
 }))
 
@@ -106,9 +106,9 @@ router.get('/byusername/:username', optionalAuth, use(async (req, res) => {
   })
 
   if (result) {
-    return helper.resSend(res, result)
+    return helper.returnResult(res, result)
   } else {
-    return helper.resSend(res, [])
+    return helper.returnResult(res, [])
   }
 }))
 
@@ -135,9 +135,9 @@ router.post('/create', auth, use(async (req, res) => {
   })
 
   if (!result) {
-    return helper.resSend(res, null, 'Error', 'Unknown error')
+    return helper.returnError(res, 'Unknown error')
   } else {
-    return helper.resSend(res, result)
+    return helper.returnResult(res, result)
   }
 }))
 
@@ -166,9 +166,9 @@ router.post('/update', auth, use(async (req, res) => {
   })
 
   if (!result) {
-    return helper.resSend(res, null, 'Error', 'Unknown error')
+    return helper.returnError(res, 'Unknown error')
   } else {
-    return helper.resSend(res)
+    return helper.returnResult(res)
   }
 }))
 
@@ -176,7 +176,7 @@ router.get('/numberoftotalprojects', use(async (_req, res) => {
   // #swagger.tags = ['Projects']
 
   const result = await prisma.project.count()
-  return helper.resSend(res, { numberoftotalprojects: result })
+  return helper.returnResult(res, { numberoftotalprojects: result })
 }))
 
 module.exports = router

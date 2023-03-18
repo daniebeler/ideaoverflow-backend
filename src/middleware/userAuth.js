@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken')
+const helper = require('../helper')
 
 const auth = (req, res, next) => {
   let token
@@ -7,13 +8,13 @@ const auth = (req, res, next) => {
   }
 
   if (!token) {
-    return res.status(403).send('A token is required for authentication')
+    return helper.returnError(res, 'A token is required for authentication')
   }
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
     req.user = decoded
   } catch (err) {
-    return res.status(401).send('Invalid Token')
+    return helper.returnError(res, 'Invalid Token')
   }
   return next()
 }

@@ -60,15 +60,22 @@ module.exports = {
     return obj
   },
 
-  resSend(res, data, status, error) {
+  returnResult(res, data) {
     data = data ?? {}
-    status = status?.toString() ?? this.resStatuses.ok
+
+    const rspJson = {}
+    rspJson.status = this.resStatuses.ok
+    rspJson.data = data
+
+    res.send(JSON.stringify(rspJson))
+  },
+
+  returnError(res, error) {
     error = error ?? ''
 
     const rspJson = {}
-    rspJson.status = status
+    rspJson.status = this.resStatuses.error
     rspJson.error = error
-    rspJson.data = data
 
     res.send(JSON.stringify(rspJson))
   },

@@ -62,6 +62,8 @@ router.get('/byid/:id', optionalAuth, use(async (req, res) => {
     })
 
     result.votevalue = votevalue?.value ?? 0
+
+    result.mine = req.user.id === result.user.id
   }
 
   result.upvotes = upvotes
@@ -71,9 +73,9 @@ router.get('/byid/:id', optionalAuth, use(async (req, res) => {
   delete result.user_saves_post
 
   if (result) {
-    return helper.resSend(res, result)
+    return helper.returnResult(res, result)
   } else {
-    return helper.resSend(res, {})
+    return helper.returnResult(res, {})
   }
 }))
 
@@ -106,12 +108,19 @@ router.get('/byusername/:username', optionalAuth, use(async (req, res) => {
     }
   })
 
+  if (req.user?.id) {
+    // eslint-disable-next-line array-callback-return
+    result.map(idea => {
+      idea.mine = req.user.id === idea.user.id
+    })
+  }
+
   result = await getUpAndDownVotes(result)
 
   if (result) {
-    return helper.resSend(res, result)
+    return helper.returnResult(res, result)
   } else {
-    return helper.resSend(res, [])
+    return helper.returnResult(res, [])
   }
 }))
 
@@ -145,6 +154,13 @@ router.get('/saved', auth, use(async (req, res) => {
     }
   })
 
+  if (req.user?.id) {
+    // eslint-disable-next-line array-callback-return
+    result.map(idea => {
+      idea.mine = req.user.id === idea.user.id
+    })
+  }
+
   result = await getUpAndDownVotes(result)
 
   result.forEach(function (element) {
@@ -158,9 +174,9 @@ router.get('/saved', auth, use(async (req, res) => {
   })
 
   if (result) {
-    return helper.resSend(res, result)
+    return helper.returnResult(res, result)
   } else {
-    return helper.resSend(res, [])
+    return helper.returnResult(res, [])
   }
 }))
 
@@ -234,9 +250,9 @@ router.get('/all', optionalAuth, use(async (req, res) => {
   result = await getUpAndDownVotes(result)
 
   if (result) {
-    return helper.resSend(res, result)
+    return helper.returnResult(res, result)
   } else {
-    return helper.resSend(res, [])
+    return helper.returnResult(res, [])
   }
 }))
 
@@ -284,7 +300,7 @@ router.post('/create', auth, use(async (req, res) => {
     }
   })
 
-  return helper.resSend(res)
+  return helper.returnResult(res)
 }))
 
 router.post('/update', auth, use(async (req, res) => {
@@ -300,14 +316,14 @@ router.post('/update', auth, use(async (req, res) => {
     }
   })
 
-  return helper.resSend(res)
+  return helper.returnResult(res)
 }))
 
 router.get('/numberoftotalideas', use(async (_req, res) => {
   // #swagger.tags = ['Ideas']
 
   const numberoftotalideas = await prisma.post.count()
-  return helper.resSend(res, { numberoftotalideas })
+  return helper.returnResult(res, { numberoftotalideas })
 }))
 
 router.post('/vote', auth, use(async (req, res) => {
@@ -330,7 +346,7 @@ router.post('/vote', auth, use(async (req, res) => {
     }
   })
 
-  return helper.resSend(res, result)
+  return helper.returnResult(res, result)
 }))
 
 router.post('/save', auth, use(async (req, res) => {
@@ -350,7 +366,7 @@ router.post('/save', auth, use(async (req, res) => {
     }
   })
 
-  return helper.resSend(res, result)
+  return helper.returnResult(res, result)
 }))
 
 router.post('/unsave', auth, use(async (req, res) => {
@@ -363,7 +379,7 @@ router.post('/unsave', auth, use(async (req, res) => {
     }
   })
 
-  return helper.resSend(res, { success: true })
+  return helper.returnResult(res, { success: true })
 }))
 
 module.exports = router

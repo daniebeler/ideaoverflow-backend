@@ -24,9 +24,9 @@ router.get('/byid/:userid', use(async (req, res) => {
   result.numberOfProjects = await functions.getNumberOfProjectsByUserid(userId)
 
   if (result) {
-    return helper.resSend(res, result)
+    return helper.returnResult(res, result)
   } else {
-    return helper.resSend(res, {})
+    return helper.returnResult(res, {})
   }
 }))
 
@@ -45,9 +45,9 @@ router.get('/byusername/:username', use(async (req, res) => {
   }
 
   if (result) {
-    return helper.resSend(res, result)
+    return helper.returnResult(res, result)
   } else {
-    return helper.resSend(res, {})
+    return helper.returnResult(res, {})
   }
 }))
 
@@ -55,7 +55,7 @@ router.get('/all', use(async (req, res) => {
   // #swagger.tags = ['Users']
 
   const result = await prisma.user.findMany()
-  return helper.resSend(res, result)
+  return helper.returnResult(res, result)
 }))
 
 router.get('/usersbysearchterm/:searchterm', use(async (req, res) => {
@@ -67,7 +67,7 @@ router.get('/usersbysearchterm/:searchterm', use(async (req, res) => {
     }
   })
 
-  return res.send(result)
+  return helper.returnResult(res, result)
 }))
 
 router.post('/changedata', auth, use(async (req, res) => {
@@ -101,9 +101,9 @@ router.post('/changedata', auth, use(async (req, res) => {
   })
 
   if (!response) {
-    return helper.resSend(res, null, 'Error', 'Unknown error')
+    return helper.returnError(res, 'Unknown error')
   } else {
-    return helper.resSend(res)
+    return helper.returnResult(res)
   }
 }))
 
@@ -113,9 +113,9 @@ router.post('/changepw', auth, use(async (req, res) => {
   const pwStrength = /^(?=.*[A-Za-z])(?=.*\d)[\S]{6,}$/ // mindestens 6 Stellen && eine Zahl && ein Buchstabe
 
   if (!req.body.oldPassword || !req.body.newPassword) {
-    return helper.resSend(res, null, 'Error', 'Information missing')
+    return helper.returnError(res, 'Information missing')
   } else if (!pwStrength.test(req.body.newPassword)) {
-    return helper.resSend(res, null, 'Error', 'Password too weak')
+    return helper.returnError(res, 'Password too weak')
   }
 
   const user = await prisma.user.findUnique({
@@ -125,12 +125,12 @@ router.post('/changepw', auth, use(async (req, res) => {
   })
 
   if (!user) {
-    return helper.resSend(res, null, 'Error', 'Unknown Error')
+    return helper.returnError(res, 'Unknown Error')
   }
 
   bcrypt.compare(req.body.oldPassword, user.password, (err, isMatch) => {
     if (err) {
-      return helper.resSend(res, null, 'Error', 'Unknown Error')
+      return helper.returnError(res, 'Unknown Error')
     }
     if (isMatch) {
       bcrypt.genSalt(512, (_err, salt) => {
@@ -143,11 +143,11 @@ router.post('/changepw', auth, use(async (req, res) => {
               password: enc
             }
           })
-          return helper.resSend(res)
+          return helper.returnResult(res)
         })
       })
     } else {
-      return helper.resSend(res, null, 'Error', 'Wrong password')
+      return helper.returnError(res, 'Wrong password')
     }
   })
 }))
@@ -156,7 +156,7 @@ router.get('/numberoftotalusers', use(async (_req, res) => {
   // #swagger.tags = ['Users']
 
   const result = await prisma.user.count()
-  return helper.resSend(res, { numberoftotalusers: result })
+  return helper.returnResult(res, { numberoftotalusers: result })
 }))
 
 module.exports = router

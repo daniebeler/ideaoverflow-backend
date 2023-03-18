@@ -25,7 +25,7 @@ router.post('/follow', auth, use(async (req, res) => {
     }
   })
 
-  return helper.resSend(res, { status: 200 })
+  return helper.returnResult(res, { status: 200 })
 }
 ))
 
@@ -39,7 +39,7 @@ router.post('/unfollow', auth, use(async (req, res) => {
     }
   })
 
-  return helper.resSend(res, { status: 200 })
+  return helper.returnResult(res, { status: 200 })
 }))
 
 router.get('/followersbyuserid/:id', optionalAuth, use(async (req, res) => {
@@ -83,9 +83,9 @@ router.get('/followersbyuserid/:id', optionalAuth, use(async (req, res) => {
   }
 
   if (!result) {
-    return helper.resSend(res, null, 'Error', 'Unknown error')
+    return helper.returnError(res, 'Unknown error')
   } else {
-    return helper.resSend(res, result)
+    return helper.returnResult(res, result)
   }
 }))
 
@@ -130,9 +130,9 @@ router.get('/followeesbyuserid/:id', optionalAuth, use(async (req, res) => {
   }
 
   if (!result) {
-    return helper.resSend(res, null, 'Error', 'Unknown error')
+    return helper.returnError(res, 'Unknown error')
   } else {
-    return helper.resSend(res, result)
+    return helper.returnResult(res, result)
   }
 }))
 

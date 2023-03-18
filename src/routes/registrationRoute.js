@@ -13,15 +13,15 @@ router.post('/register', use(async (req, res) => {
   // #swagger.description = 'Registers a new user.'
 
   if (!req.body.email || !req.body.username || !req.body.password) {
-    return helper.resSend(res, null, 'Error', 'Empty fields')
+    return helper.returnError(res, 'Empty fields')
   }
 
   if (!helper.testPasswordStrength(req.body.password)) {
-    return helper.resSend(res, null, 'Error', 'The password must be at least 6 characters long. There must be at least one letter and one number.')
+    return helper.returnError(res, 'The password must be at least 6 characters long. There must be at least one letter and one number.')
   }
 
   if (!helper.checkIfIsEmail(req.body.email)) {
-    return helper.resSend(res, null, 'Error', 'Invalid email')
+    return helper.returnError(res, 'Invalid email')
   }
 
   const userCheck = await prisma.user.findFirst({
@@ -39,9 +39,9 @@ router.post('/register', use(async (req, res) => {
 
   if (userCheck) {
     if (userCheck.email === req.body.email) {
-      return helper.resSend(res, null, 'Error', 'This email is already used')
+      return helper.returnError(res, 'This email is already used')
     } else {
-      return helper.resSend(res, null, 'Error', 'This username is already used')
+      return helper.returnError(res, 'This username is already used')
     }
   }
 
@@ -63,7 +63,7 @@ router.post('/register', use(async (req, res) => {
         newUser.email,
         newUser.username
       )
-      helper.resSend(res, { token: usertoken })
+      helper.returnResult(res, { token: usertoken })
     })
   })
 }))
@@ -73,7 +73,7 @@ router.post('/login', use(async (req, res) => {
   // #swagger.description = 'Login a user.'
 
   if (!req.body.email || !req.body.password) {
-    return helper.resSend(res, null, 'Error', 'Empty fields')
+    return helper.returnError(res, 'Empty fields')
   }
 
   const foundUser = await prisma.user.findFirst({
@@ -88,20 +88,20 @@ router.post('/login', use(async (req, res) => {
   })
 
   if (!foundUser) {
-    return helper.resSend(res, null, 'Error', 'Wrong email or password')
+    return helper.returnError(res, 'Wrong email or password')
   }
 
   bcrypt.compare(req.body.password, foundUser.password, async (err, isMatch) => {
     if (err) {
-      return helper.resSend(res, null, 'Error', 'Unknown error')
+      return helper.returnError(res, 'Unknown error')
     }
 
     if (!isMatch) {
-      return helper.resSend(res, null, 'Error', 'Wrong email or password')
+      return helper.returnError(res, 'Wrong email or password')
     }
 
     const usertoken = helper.createJWT(foundUser.id, foundUser.email, foundUser.username)
-    return helper.resSend(res, { token: usertoken })
+    return helper.returnResult(res, { token: usertoken })
   })
 }))
 
@@ -115,7 +115,7 @@ router.get('/verify/:code', use(async (req, res) => {
   })
 
   if (result?.verified === 1) {
-    return res.status(200).json({ verified: false })
+    return helper.returnResult(res, { verified: false })
   } else {
     await prisma.user.update({
       where: {
@@ -126,8 +126,7 @@ router.get('/verify/:code', use(async (req, res) => {
         verificationcode: ''
       }
     })
-
-    return res.status(200).json({ verified: true })
+    return helper.returnResult(res, { verified: true })
   }
 }))
 
@@ -144,11 +143,11 @@ router.post('/sendverificationmailagain', use(async (req, res) => {
   })
 
   if (!result) {
-    return res.status(500).json({ header: 'Error', message: 'Failed to send mail!' })
+    return helper.returnError(res, 'Failed to send mail!')
   }
 
   helper.sendMail(req.body.email, 'Email verification', 'Open this link to enable your account: https://ideaoverflow.xyz/verify/' + result.verificationcode)
-  return res.status(200).json({ header: 'Success!', message: 'Mail sent!' })
+  return helper.returnResult(res)
 }))
 
 router.post('/resetpassword', use(async (req, res) => {
@@ -167,13 +166,13 @@ router.post('/resetpassword', use(async (req, res) => {
   })
 
   if (!result) {
-    return res.status(200).json({ header: 'Fehler', message: 'Die E-Mail wurde nicht gefunden' })
+    return helper.returnError(res, 'Email does not exist')
   }
 
   helper.sendMail(req.body.email,
     'Reset password',
     'Open the following link to reset your password: https://ideaoverflow.xyz/resetpassword/' + code)
-  return res.status(200).json({ header: 'Nice!', message: 'Mail sent to ' + req.body.email + '!' })
+  return helper.returnResult(res)
 }))
 
 router.get('/checkresetcode/:code', use(async (req, res) => {
@@ -186,9 +185,9 @@ router.get('/checkresetcode/:code', use(async (req, res) => {
   })
 
   if (!result) {
-    return res.status(200).json({ message: 'This code does not exist!', exists: false })
+    return helper.returnResult(res, { exists: false })
   } else {
-    return res.status(200).json({ exists: true })
+    return helper.returnResult(res, { exists: true })
   }
 }))
 
@@ -196,11 +195,15 @@ router.post('/setpassword', use(async (req, res) => {
   // #swagger.tags = ['Authentication']
 
   if (!req.body.pw1 || !req.body.pw2) {
-    return res.json({ header: 'Error', message: 'Informationen unvollständig!', stay: true })
-  } else if (req.body.pw1 !== req.body.pw2) {
-    return res.json({ header: 'Error', message: 'Passwords are not the same!', stay: true })
-  } else if (!helper.testPasswordStrength(req.body.pw1)) {
-    return res.json({ header: 'Error', message: 'The password must be at least 6 characters long. There must be at least one letter and one number.', stay: true })
+    return helper.returnError(res, 'Missing information')
+  }
+
+  if (req.body.pw1 !== req.body.pw2) {
+    return helper.returnError(res, 'Passwords are not the same')
+  }
+
+  if (!helper.testPasswordStrength(req.body.pw1)) {
+    return helper.returnError(res, 'The password must be at least 6 characters long. There must be at least one letter and one number')
   }
 
   const foundUser = await prisma.user.findFirst({
@@ -210,7 +213,7 @@ router.post('/setpassword', use(async (req, res) => {
   })
 
   if (!foundUser) {
-    return res.json({ header: 'Error', message: 'This code does not exist', stay: false })
+    return helper.returnError(res, 'This code does not exist')
   }
 
   bcrypt.genSalt(512, (_err, salt) => {
@@ -226,7 +229,7 @@ router.post('/setpassword', use(async (req, res) => {
         }
       })
 
-      return res.json({ header: 'Congrats', message: 'Your password has been changed', stay: false })
+      return helper.returnResult(res)
     })
   })
 }))
