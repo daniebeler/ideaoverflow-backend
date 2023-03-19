@@ -150,6 +150,9 @@ router.post('/update', auth, use(async (req, res) => {
     req.body.website = req.body.website.slice(8)
   }
 
+  req.body.release_date = new Date(req.body.release_date)
+  req.body.start_date = new Date(req.body.start_date)
+
   const result = await prisma.project.update({
     where: {
       id: parseInt(req.body.id)

@@ -24,6 +24,7 @@ model post {
   creation_date    DateTime          @default(now()) @db.DateTime(0)
   title            String            @db.VarChar(100)
   body             String            @db.VarChar(10000)
+  comment          comment[]
   user             user              @relation(fields: [fk_owner_user_id], references: [id], onUpdate: Restrict, map: "post_FK")
   post_has_tag     post_has_tag[]
   user_saves_post  user_saves_post[]
@@ -53,6 +54,7 @@ model project {
   logo              String?      @db.VarChar(100)
   website           String?      @db.VarChar(200)
   fk_user_id        Int
+  comment           comment[]
   user              user         @relation(fields: [fk_user_id], references: [id], onUpdate: Restrict, map: "project_FK")
   screenshot        screenshot[]
 
@@ -95,6 +97,7 @@ model user {
   creationdate                        DateTime          @default(now()) @db.DateTime(0)
   bio                                 String?           @db.VarChar(1000)
   color                               String            @default("#0cc87e") @db.VarChar(10)
+  comment                             comment[]
   follower_follower_followee_idTouser follower[]        @relation("follower_followee_idTouser")
   follower_follower_follower_idTouser follower[]        @relation("follower_follower_idTouser")
   post                                post[]
@@ -123,4 +126,20 @@ model vote {
 
   @@id([user_id, post_id])
   @@index([post_id], map: "like_FK_1")
+}
+
+model comment {
+  id            Int      @id @default(autoincrement())
+  fk_idea_id    Int?
+  fk_project_id Int?
+  creation_date DateTime @default(now()) @db.DateTime(0)
+  fk_user_id    Int
+  body          String   @db.VarChar(255)
+  user          user     @relation(fields: [fk_user_id], references: [id], onUpdate: Restrict, map: "comment_FK")
+  project       project? @relation(fields: [fk_project_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "comment_FK_1")
+  post          post?    @relation(fields: [fk_idea_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "comment_FK_2")
+
+  @@index([fk_user_id], map: "comment_FK")
+  @@index([fk_project_id], map: "comment_FK_1")
+  @@index([fk_idea_id], map: "comment_FK_2")
 }

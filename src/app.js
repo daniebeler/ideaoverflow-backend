@@ -24,6 +24,9 @@ app.use('/follower', followerRoute)
 const projectRoute = require('./routes/projectRoute')
 app.use('/project', projectRoute)
 
+const commentRoute = require('./routes/commentRoute')
+app.use('/comment', commentRoute)
+
 app.use(ErrorHandler)
 app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerFile))
 
