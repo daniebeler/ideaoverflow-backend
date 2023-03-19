@@ -186,8 +186,6 @@ router.get('/all', optionalAuth, use(async (req, res) => {
   const query = helper.convertQuery(req.query)
   const sortBy = query.sort ?? 'date'
 
-  console.log('query', query)
-
   let result
 
   if (sortBy === 'date') {
@@ -211,7 +209,6 @@ router.get('/all', optionalAuth, use(async (req, res) => {
       }
     })
   } else if (sortBy === 'likes') {
-    console.log('likes')
     result = await prisma.post.findMany({
       skip: query.skip ?? 0,
       take: query.take ?? 100,
