@@ -50,6 +50,12 @@ router.get('/byid/:id', optionalAuth, use(async (req, res) => {
     }
   })
 
+  const numberOfComments = await prisma.comment.count({
+    where: {
+      fk_idea_id: result.id
+    }
+  })
+
   if (req.user?.id) {
     const votevalue = await prisma.vote.findFirst({
       where: {
@@ -68,6 +74,7 @@ router.get('/byid/:id', optionalAuth, use(async (req, res) => {
 
   result.upvotes = upvotes
   result.downvotes = downvotes
+  result.numberOfComments = numberOfComments
   result.saved = result.user_saves_post.length !== 0
 
   delete result.user_saves_post
@@ -83,30 +90,66 @@ router.get('/byusername/:username', optionalAuth, use(async (req, res) => {
   // #swagger.tags = ['Ideas']
 
   const query = helper.convertQuery(req.query)
-  let result = await prisma.post.findMany({
-    skip: query.skip ?? 0,
-    take: query.take ?? 100,
-    orderBy: {
-      creation_date: query.orderDirection
-    },
-    where: {
-      user: {
-        username: req.params.username
-      }
-    },
-    include: {
-      user: {
-        select: {
-          id: true,
-          username: true,
-          firstname: true,
-          lastname: true,
-          profileimage: true,
-          color: true
+  const sortBy = query.sort ?? 'date'
+
+  let result
+
+  if (sortBy === 'date') {
+    result = await prisma.post.findMany({
+      skip: query.skip ?? 0,
+      take: query.take ?? 100,
+      orderBy: {
+        creation_date: query.orderDirection
+      },
+      where: {
+        user: {
+          username: req.params.username
+        }
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            firstname: true,
+            lastname: true,
+            profileimage: true,
+            color: true
+          }
         }
       }
-    }
-  })
+    })
+  } else if (sortBy === 'likes') {
+    result = await prisma.post.findMany({
+      skip: query.skip ?? 0,
+      take: query.take ?? 100,
+      where: {
+        vote: {
+          every: { value: 1 }
+        },
+        user: {
+          username: req.params.username
+        }
+      },
+      orderBy: {
+        vote: {
+          _count: 'desc'
+        }
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            firstname: true,
+            lastname: true,
+            profileimage: true,
+            color: true
+          }
+        }
+      }
+    })
+  }
 
   if (req.user?.id) {
     // eslint-disable-next-line array-callback-return
@@ -116,6 +159,7 @@ router.get('/byusername/:username', optionalAuth, use(async (req, res) => {
   }
 
   result = await getUpAndDownVotes(result)
+  result = await getNumberOfComments(result)
 
   if (result) {
     return helper.returnResult(res, result)
@@ -245,6 +289,7 @@ router.get('/all', optionalAuth, use(async (req, res) => {
   }
 
   result = await getUpAndDownVotes(result)
+  result = await getNumberOfComments(result)
 
   if (result) {
     return helper.returnResult(res, result)
@@ -282,6 +327,21 @@ const getUpAndDownVotes = async (result) => {
   // eslint-disable-next-line array-callback-return
   result.map((idea) => {
     idea.downvotes = downvotes.find((downvote) => downvote.post_id === idea.id)?._count?.post_id ?? 0
+  })
+  return result
+}
+
+const getNumberOfComments = async (result) => {
+  const comments = await prisma.comment.groupBy({
+    by: ['fk_idea_id'],
+    _count: {
+      fk_idea_id: true
+    }
+  })
+
+  // eslint-disable-next-line array-callback-return
+  result.map(idea => {
+    idea.numberOfComments = comments.find((comment) => comment.fk_idea_id === idea.id)?._count?.fk_idea_id ?? 0
   })
   return result
 }
