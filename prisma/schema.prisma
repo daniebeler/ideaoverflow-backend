@@ -129,17 +129,17 @@ model vote {
 }
 
 model comment {
-  id            Int      @id @default(autoincrement())
+  id            Int       @id @default(autoincrement())
   fk_idea_id    Int?
   fk_project_id Int?
-  creation_date DateTime @default(now()) @db.DateTime(0)
   fk_user_id    Int
-  body          String   @db.VarChar(255)
-  user          user     @relation(fields: [fk_user_id], references: [id], onUpdate: Restrict, map: "comment_FK")
-  project       project? @relation(fields: [fk_project_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "comment_FK_1")
-  post          post?    @relation(fields: [fk_idea_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "comment_FK_2")
+  creation_date DateTime? @default(now()) @db.DateTime(0)
+  body          String    @db.VarChar(255)
+  project       project?  @relation(fields: [fk_project_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "comment_FK_1")
+  post          post?     @relation(fields: [fk_idea_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "comment_FK_2")
+  user          user      @relation(fields: [fk_user_id], references: [id], onUpdate: Restrict, map: "comment_FK")
 
-  @@index([fk_user_id], map: "comment_FK")
-  @@index([fk_project_id], map: "comment_FK_1")
-  @@index([fk_idea_id], map: "comment_FK_2")
+  @@index([fk_project_id], map: "comment_FK")
+  @@index([fk_idea_id], map: "comment_FK_1")
+  @@index([fk_user_id], map: "comment_FK_2")
 }

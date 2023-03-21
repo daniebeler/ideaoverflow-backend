@@ -291,6 +291,8 @@ router.get('/all', optionalAuth, use(async (req, res) => {
   result = await getUpAndDownVotes(result)
   result = await getNumberOfComments(result)
 
+  if (req.user?.id) result = await getLikedByMe(result, req.user.id)
+
   if (result) {
     return helper.returnResult(res, result)
   } else {
@@ -342,6 +344,34 @@ const getNumberOfComments = async (result) => {
   // eslint-disable-next-line array-callback-return
   result.map(idea => {
     idea.numberOfComments = comments.find((comment) => comment.fk_idea_id === idea.id)?._count?.fk_idea_id ?? 0
+  })
+  return result
+}
+
+const getLikedByMe = async (result, userId) => {
+  const likedByMe = await prisma.vote.groupBy({
+    by: ['post_id'],
+    where: {
+      value: 1,
+      user_id: userId
+    }
+  })
+  const dislikedByMe = await prisma.vote.groupBy({
+    by: ['post_id'],
+    where: {
+      value: -1,
+      user_id: userId
+    }
+  })
+  // eslint-disable-next-line array-callback-return
+  result.map(idea => {
+    if (likedByMe.find((liked) => liked.post_id === idea.id)) {
+      idea.votevalue = 1
+    } else if (dislikedByMe.find((disliked) => disliked.post_id === idea.id)) {
+      idea.votevalue = -1
+    } else {
+      idea.votevalue = 0
+    }
   })
   return result
 }
