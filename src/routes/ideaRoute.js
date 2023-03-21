@@ -211,6 +211,7 @@ router.get('/saved', auth, use(async (req, res) => {
     element.id = element.post.id
     element.title = element.post.title
     element.body = element.post.body
+    element.saved = true
     delete element.post
     delete element.user_id
     delete element.post_id
@@ -291,8 +292,11 @@ router.get('/all', optionalAuth, use(async (req, res) => {
   result = await getUpAndDownVotes(result)
   result = await getNumberOfComments(result)
 
-  if (req.user?.id) result = await getLikedByMe(result, req.user.id)
-
+  if (req.user?.id) {
+    result = await getLikedByMe(result, req.user.id)
+    result = await getSavedPosts(result, req.user.id)
+  }
+  console.log(result)
   if (result) {
     return helper.returnResult(res, result)
   } else {
@@ -374,6 +378,20 @@ const getLikedByMe = async (result, userId) => {
     }
   })
   return result
+}
+
+const getSavedPosts = async (ideas, userId) => {
+  const savedPosts = await prisma.user_saves_post.findMany({
+    where: {
+      user_id: userId
+    }
+  })
+  console.log(savedPosts)
+  // eslint-disable-next-line array-callback-return
+  ideas.map(item => {
+    item.saved = !!savedPosts.find((saved) => saved.post_id === item.id)
+  })
+  return ideas
 }
 
 router.post('/create', auth, use(async (req, res) => {
